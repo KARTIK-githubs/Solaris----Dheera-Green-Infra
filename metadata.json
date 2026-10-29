@@ -1,0 +1,6 @@
+{
+  "name": "SOLARIS",
+  "description": "Intelligent solar adoption, community solar planning, affordability optimisation, and transparent credit allocation for Delhi and India.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

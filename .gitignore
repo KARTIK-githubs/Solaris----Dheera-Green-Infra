@@ -1,0 +1,20 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+# Temporary browser profiles and generated files
+scratch/
+node_modules/
+dist/
+.env
+.env.*
+scratch/
+.env
+.env.*
+!.env.example
+node_modules/
+dist/

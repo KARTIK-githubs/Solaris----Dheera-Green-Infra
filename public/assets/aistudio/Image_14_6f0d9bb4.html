@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface": "#f4faff", "surface-container-high": "#dceaf4", "surface-container": "#e2f0f9", "tertiary-fixed": "#ffdea7", "error-container": "#ffdad6", "on-error": "#ffffff", "inverse-on-surface": "#e5f3fc", "on-surface-variant": "#404846", "secondary-fixed-dim": "#7ed7bd", "on-primary": "#ffffff", "on-background": "#101d24", "outline": "#717976", "on-primary-fixed-variant": "#234e45", "on-secondary-fixed": "#002019", "inverse-surface": "#253239", "on-tertiary-fixed-variant": "#5e4200", "surface-variant": "#d6e5ee", "primary-fixed-dim": "#a3d0c4", "tertiary": "#2e1e00", "surface-container-lowest": "#ffffff", "on-primary-container": "#7ca89d", "primary-fixed": "#bfece0", "secondary-fixed": "#9af4d8", "on-secondary-container": "#00725d", "tertiary-fixed-dim": "#f6bd4f", "primary-container": "#103d35", "on-surface": "#101d24", "surface-tint": "#3c665d", "on-secondary": "#ffffff", "secondary": "#006b57", "on-tertiary": "#ffffff", "primary": "#002620", "on-secondary-fixed-variant": "#005141", "secondary-container": "#9af4d8", "on-primary-fixed": "#00201b", "error": "#ba1a1a", "on-error-container": "#93000a", "on-tertiary-fixed": "#271900", "surface-container-highest": "#d6e5ee", "surface-dim": "#cedce5", "surface-bright": "#f4faff", "inverse-primary": "#a3d0c4", "tertiary-container": "#493200", "outline-variant": "#c0c8c5", "on-tertiary-container": "#ca962b", "surface-container-low": "#e8f6ff", "background": "#f4faff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-lg": "1.5rem", "margin-mobile": "1rem", "space-md": "1rem", "space-xs": "0.25rem", "gutter": "1.5rem", "margin": "2rem", "space-xl": "2rem", "space-sm": "0.5rem", "gutter-mobile": "1rem" }, "fontFamily": { "headline-xl": ["Manrope"], "body-lg": ["Inter"], "display-lg": ["Manrope"], "metric-md": ["Manrope"], "label-md": ["Inter"], "headline-xl-mobile": ["Manrope"], "body-md": ["Inter"], "label-sm": ["Inter"], "display-lg-mobile": ["Manrope"], "headline-lg": ["Manrope"], "metric-xl": ["Manrope"], "headline-sm": ["Manrope"], "headline-md": ["Manrope"], "body-sm": ["Inter"] }, "fontSize": { "headline-xl": ["2.25rem", {"lineHeight": "2.75rem", "letterSpacing": "-0.02em", "fontWeight": "700"}], "body-lg": ["1.125rem", {"lineHeight": "1.75rem", "letterSpacing": "-0.005em", "fontWeight": "400"}], "display-lg": ["3.5rem", {"lineHeight": "4.25rem", "letterSpacing": "-0.03em", "fontWeight": "700"}], "metric-md": ["1.5rem", {"lineHeight": "2rem", "letterSpacing": "-0.02em", "fontWeight": "600"}], "label-md": ["0.8125rem", {"lineHeight": "1.125rem", "letterSpacing": "0.01em", "fontWeight": "500"}], "headline-xl-mobile": ["1.75rem", {"lineHeight": "2.25rem", "letterSpacing": "-0.01em", "fontWeight": "600"}], "body-md": ["0.875rem", {"lineHeight": "1.375rem", "letterSpacing": "0", "fontWeight": "400"}], "label-sm": ["0.6875rem", {"lineHeight": "0.875rem", "letterSpacing": "0.04em", "fontWeight": "600"}], "display-lg-mobile": ["2.25rem", {"lineHeight": "2.75rem", "letterSpacing": "-0.02em", "fontWeight": "700"}], "headline-lg": ["1.75rem", {"lineHeight": "2.25rem", "letterSpacing": "-0.015em", "fontWeight": "600"}], "metric-xl": ["2.75rem", {"lineHeight": "3rem", "letterSpacing": "-0.03em", "fontWeight": "700"}], "headline-sm": ["1rem", {"lineHeight": "1.5rem", "letterSpacing": "0", "fontWeight": "600"}], "headline-md": ["1.25rem", {"lineHeight": "1.75rem", "letterSpacing": "-0.01em", "fontWeight": "600"}], "body-sm": ["0.75rem", {"lineHeight": "1.125rem", "letterSpacing": "0.01em", "fontWeight": "400"}] } } } };</script><style>@layer base{html,body{width:100%;margin:0;padding:0;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface min-h-full flex flex-col selection:bg-secondary-container selection:text-on-secondary-container"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_12px_rgba(16,61,53,0.06)]"><div class="h-16 px-margin-mobile flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="Solaris Geometric Emblem" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1VRQ3ag_QUrg4F0RpgjDeg7dO5VcOfyaoOVMnuIl2OAGmbDHOYUxs2eERwlsekc4X4YPZEiFGfPCJ2p0zPYO7kbJQLSUvF3z2dlANCijd68Bpca06A2Vi1uqrvQPl7TnFRfFCSB0SsHgvs3NVpLhyvpNDZV4E-ZtB3wqovkmmQ2Zo6GtMJaSipNp0Sqqlz489QzoJnctAEJd_LUXI1cKHjEkUq_qibBtcKFTkSBu623vnQUNoBl2byPwHQ"/><div class="flex flex-col"><div class="flex items-center gap-1.5"><span class="font-headline-sm text-headline-sm text-primary tracking-tight font-bold leading-none">SOLARIS</span><span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-secondary-container/60 text-secondary font-label-sm text-label-sm leading-none"><span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>Delhi (BRPL)</span></div><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Assess</span></div></div><div class="flex items-center gap-1"><button aria-label="Notifications" class="relative w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-secondary hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-tertiary-fixed-dim ring-2 ring-surface"></span></button><div class="w-11 h-11 flex items-center justify-center"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shadow-[0_0_0_2px_rgba(0,107,87,0.15)]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOCw3_x5kggCZA-8gYXL_IqD9UGPInL8dDI_KLzxMKLSVw6wDKwFNvO83-jGssib42nLy1UBemp8csYhlhtpPj6c1Lv698HOaJ_r6HLI1c6eBs25G95aoANJ6YUj6G7h523c89jsYLlHU0mQqS07NMO8rlR-8LKdaA3pqrIir9Bv5DalugqUNKhcULE8HwTD_vDHSjKuhKODrhdEIqy9y6ylGpU7cX4s_rqKxr2zq5Ae4okzcjh_3QgA"/></div></div></div></header><main class="flex-1 w-full bg-surface pt-16 pb-20"><div class="flex flex-col w-full pb-10">
+<!-- Top Progress & Hero Indicator -->
+<div class="px-margin-mobile pt-3 pb-4">
+<div class="flex items-center justify-between mb-2">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container/50 text-secondary font-label-sm text-label-sm uppercase tracking-wider font-semibold">
+<span class="material-symbols-outlined text-[14px]">tune</span> Step 2 of 4 • Simulation Active
+      </span>
+<span class="flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> Live Model
+      </span>
+</div>
+<h1 class="font-headline-xl-mobile text-headline-xl-mobile text-primary tracking-tight font-bold">Rooftop Solar Feasibility</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 leading-snug">
+      Calculate solar potential, estimate savings under Delhi DISCOM tariffs, and evaluate community options.
+    </p>
+</div>
+<!-- Wizard Controls / Interactive Input Deck -->
+<div class="px-margin-mobile space-y-4">
+<!-- Calculator Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(16,61,53,0.05)] p-space-md flex flex-col gap-4">
+<!-- Electricity Bill Slider -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-on-surface-variant font-semibold flex items-center gap-1.5" for="bill-slider">
+<span class="material-symbols-outlined text-[18px] text-secondary">receipt_long</span> Monthly Electricity Bill
+          </label>
+<span class="font-label-sm text-label-sm text-secondary bg-secondary-container/40 px-2 py-0.5 rounded-full font-medium">~620 kWh / mo</span>
+</div>
+<div class="flex items-baseline justify-between bg-surface-container-low px-3.5 py-2 rounded-lg">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-lg text-headline-lg text-primary font-bold tracking-tight" id="bill-display">₹6,850</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">/month</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Avg. Delhi LT-1</span>
+</div>
+<input class="w-full accent-secondary cursor-pointer h-2 bg-surface-container-high rounded-lg appearance-none" id="bill-slider" max="18000" min="1500" oninput="document.getElementById('bill-display').innerText = '₹' + Number(this.value).toLocaleString('en-IN')" step="250" type="range" value="6850"/>
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant px-1">
+<span>₹1,500</span>
+<span>₹9,000</span>
+<span>₹18,000+</span>
+</div>
+</div>
+<!-- Quick Parameter Grid -->
+<div class="grid grid-cols-2 gap-2.5 pt-1">
+<!-- DISCOM -->
+<div class="bg-surface-container-low p-2.5 rounded-lg flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">DISCOM Provider</span>
+<div class="flex items-center gap-1.5 mt-1">
+<span class="material-symbols-outlined text-[18px] text-secondary">power</span>
+<span class="font-headline-sm text-headline-sm text-primary leading-tight font-semibold">BRPL</span>
+</div>
+<span class="font-label-sm text-[10px] text-on-surface-variant mt-0.5 truncate">BSES Domestic LT-1</span>
+</div>
+<!-- Sanctioned Load -->
+<div class="bg-surface-container-low p-2.5 rounded-lg flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Sanctioned Load</span>
+<div class="flex items-center gap-1.5 mt-1">
+<span class="material-symbols-outlined text-[18px] text-secondary">speed</span>
+<span class="font-headline-sm text-headline-sm text-primary leading-tight font-semibold">5.0 kW</span>
+</div>
+<span class="font-label-sm text-[10px] text-secondary mt-0.5">Optimal headroom</span>
+</div>
+<!-- Rooftop Area -->
+<div class="bg-surface-container-low p-2.5 rounded-lg flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Terrace Area</span>
+<div class="flex items-center gap-1.5 mt-1">
+<span class="material-symbols-outlined text-[18px] text-secondary">domain</span>
+<span class="font-headline-sm text-headline-sm text-primary leading-tight font-semibold">650 sq.ft</span>
+</div>
+<span class="font-label-sm text-[10px] text-on-surface-variant mt-0.5 truncate">Flat RCC, South tilt</span>
+</div>
+<!-- Ownership & Permission -->
+<div class="bg-surface-container-low p-2.5 rounded-lg flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Roof Rights</span>
+<div class="flex items-center gap-1.5 mt-1">
+<span class="material-symbols-outlined text-[18px] text-secondary">verified_user</span>
+<span class="font-headline-sm text-headline-sm text-primary leading-tight font-semibold">Verified</span>
+</div>
+<span class="font-label-sm text-[10px] text-secondary mt-0.5">Self-owned / NOC</span>
+</div>
+</div>
+<!-- Upfront Budget & Subsidy Anchor -->
+<div class="bg-secondary-container/30 p-3 rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[22px]">account_balance</span>
+<div>
+<div class="font-label-md text-label-md text-primary font-semibold">Upfront Budget Ceiling: ₹1,50,000</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Eligible for PM Surya Ghar Subsidy</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary text-[18px]">check_circle</span>
+</div>
+</div>
+<!-- Recommended System: Inverted Hero Tile -->
+<div class="bg-primary-container text-on-primary rounded-xl p-space-md shadow-[0_8px_24px_rgba(16,61,53,0.18)] relative overflow-hidden">
+<!-- Decorative solar orbit glyph inspired by emblem -->
+<div class="absolute -right-6 -bottom-6 w-36 h-36 opacity-10 pointer-events-none">
+<svg class="w-full h-full fill-none stroke-current" stroke-width="3" viewbox="0 0 100 100">
+<circle cx="50" cy="50" r="42" stroke-dasharray="4 4"></circle>
+<circle cx="50" cy="50" r="32" stroke-width="6"></circle>
+<circle cx="50" cy="50" r="16"></circle>
+<line stroke-width="4" x1="50" x2="50" y1="2" y2="18"></line>
+<line stroke-width="4" x1="50" x2="50" y1="82" y2="98"></line>
+<line stroke-width="4" x1="2" x2="18" y1="50" y2="50"></line>
+<line stroke-width="4" x1="82" x2="98" y1="50" y2="50"></line>
+</svg>
+</div>
+<div class="flex items-center justify-between border-b border-on-primary/10 pb-3 mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[20px]">wb_sunny</span>
+<span class="font-label-md text-label-md uppercase tracking-wider font-semibold text-secondary-fixed">Solar Feasibility Summary</span>
+</div>
+<span class="bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm px-2 py-0.5 rounded-full font-bold">OPTIMAL</span>
+</div>
+<div class="flex items-baseline justify-between mb-3">
+<div>
+<span class="font-label-sm text-label-sm text-primary-fixed-dim block">Recommended Capacity</span>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-metric-xl text-metric-xl font-bold tracking-tight text-white">4.2</span>
+<span class="font-metric-md text-metric-md font-semibold text-secondary-fixed">kWp</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-primary-fixed-dim block">Est. Annual Generation</span>
+<div class="flex items-baseline justify-end gap-1 mt-0.5">
+<span class="font-headline-lg text-headline-lg font-bold text-white">5,880</span>
+<span class="font-label-md text-label-md text-secondary-fixed">kWh/yr</span>
+</div>
+</div>
+</div>
+<!-- Financial Breakdown Matrix -->
+<div class="grid grid-cols-2 gap-2 bg-primary/40 p-3 rounded-lg mb-3">
+<div>
+<span class="font-label-sm text-[11px] text-primary-fixed-dim block">Net Cost (After Subsidy)</span>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-headline-md text-headline-md font-bold text-tertiary-fixed-dim">₹1,32,000</span>
+</div>
+<span class="font-label-sm text-[10px] text-primary-fixed-dim line-through">₹2,10,000 Gross</span>
+</div>
+<div>
+<span class="font-label-sm text-[11px] text-primary-fixed-dim block">Payback Horizon</span>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-headline-md text-headline-md font-bold text-white">2.4</span>
+<span class="font-body-sm text-body-sm text-secondary-fixed">Years</span>
+</div>
+<span class="font-label-sm text-[10px] text-secondary-fixed-dim">ROI ~41.6% p.a.</span>
+</div>
+</div>
+<!-- Progress / Roof Utilisation Indicator -->
+<div class="space-y-1.5">
+<div class="flex justify-between font-label-sm text-label-sm text-primary-fixed-dim">
+<span>Terrace Space Utilisation</span>
+<span class="text-white font-semibold">62% (403 of 650 sq.ft)</span>
+</div>
+<div class="w-full bg-primary/60 h-2 rounded-full overflow-hidden flex">
+<div class="bg-secondary-fixed-dim h-full rounded-full transition-all duration-500" style="width: 62%"></div>
+</div>
+<div class="flex items-center justify-between font-label-sm text-[11px] text-primary-fixed-dim pt-0.5">
+<span>Projected Monthly Bill Savings:</span>
+<span class="text-tertiary-fixed font-semibold">₹4,650 – ₹5,100 / mo</span>
+</div>
+</div>
+</div>
+<!-- Comparative Solar Models Section -->
+<div class="space-y-3 pt-2">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm text-primary font-bold tracking-tight">Financing &amp; Model Matrix</h2>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">3 Models Screened</span>
+</div>
+<!-- Model 1: CAPEX (Recommended) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-[0_2px_12px_rgba(16,61,53,0.04)] relative">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]">solar_power</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary font-semibold">1. Individual Rooftop CAPEX</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Full plant ownership • Max yield</p>
+</div>
+</div>
+<span class="bg-secondary-container text-on-secondary-container font-label-sm text-label-sm px-2.5 py-0.5 rounded-full font-bold">HIGHEST ROI</span>
+</div>
+<div class="mt-3 grid grid-cols-3 gap-2 py-2 bg-surface-container-low rounded-lg text-center">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Upfront Net</span>
+<span class="font-headline-sm text-headline-sm text-primary font-bold">₹1.32L</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Monthly Gain</span>
+<span class="font-headline-sm text-headline-sm text-secondary font-bold">₹4,900</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Lifetime (25y)</span>
+<span class="font-headline-sm text-headline-sm text-primary font-bold">₹14.2L</span>
+</div>
+</div>
+<div class="mt-2.5 flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
+<span class="flex items-center gap-1 text-secondary font-medium">
+<span class="material-symbols-outlined text-[16px]">check</span> PM Surya Ghar Subsidy: ₹78,000
+          </span>
+<span class="text-on-surface-variant">BRPL Net-Meter</span>
+</div>
+</div>
+<!-- Model 2: RESCO / PPA -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-[0_2px_12px_rgba(16,61,53,0.04)]">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">handshake</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary font-semibold">2. RESCO / Developer Model</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Zero upfront cost • Pay per unit</p>
+</div>
+</div>
+<span class="bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm px-2.5 py-0.5 rounded-full font-semibold">NO CAPEX</span>
+</div>
+<div class="mt-3 grid grid-cols-3 gap-2 py-2 bg-surface-container-low rounded-lg text-center">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Upfront Net</span>
+<span class="font-headline-sm text-headline-sm text-primary font-bold">₹0</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Solar Tariff</span>
+<span class="font-headline-sm text-headline-sm text-primary font-bold">₹4.50</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Savings / mo</span>
+<span class="font-headline-sm text-headline-sm text-secondary font-bold">₹1,850</span>
+</div>
+</div>
+<div class="mt-2.5 flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
+<span class="text-on-surface-variant">Third-party maintains plant for 25 yrs</span>
+<span class="text-on-surface-variant">PPA Locked</span>
+</div>
+</div>
+<!-- Model 3: Community Solar / VNM -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-[0_2px_12px_rgba(16,61,53,0.04)]">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-tertiary-fixed/30 flex items-center justify-center text-on-tertiary-fixed-variant">
+<span class="material-symbols-outlined text-[20px]">groups</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary font-semibold">3. Virtual Net Metering (VNM)</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Shared terrace • Co-op distribution</p>
+</div>
+</div>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm px-2.5 py-0.5 rounded-full font-bold">MULTI-UNIT</span>
+</div>
+<div class="mt-3 grid grid-cols-3 gap-2 py-2 bg-surface-container-low rounded-lg text-center">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Your Share</span>
+<span class="font-headline-sm text-headline-sm text-primary font-bold">1.5 kWp</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Net Outlay</span>
+<span class="font-headline-sm text-headline-sm text-primary font-bold">₹48,000</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block">Pro-rata Sav.</span>
+<span class="font-headline-sm text-headline-sm text-secondary font-bold">₹1,750</span>
+</div>
+</div>
+<div class="mt-2.5 flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
+<span class="text-secondary font-medium">DERC Group Net Metering Guideline 2024</span>
+<span class="text-on-surface-variant">4 Flats Joined</span>
+</div>
+</div>
+</div>
+<!-- Data Confidence & Regulatory Disclaimers -->
+<div class="bg-surface-container-low rounded-xl p-3.5 space-y-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[18px]">query_stats</span>
+<span class="font-label-md text-label-md font-semibold text-primary">Simulation Confidence</span>
+</div>
+<span class="bg-secondary-container/60 text-secondary font-label-sm text-label-sm px-2 py-0.5 rounded-full font-bold">92% Precision</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant leading-relaxed">
+        Calculated using high-resolution solar irradiance databases for Delhi NCR (Lat 28.61° N) and current DERC Tariff Order FY 2024-25.
+      </p>
+<div class="p-2.5 bg-surface-container-lowest rounded-lg flex items-start gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-[16px] mt-0.5 shrink-0">info</span>
+<p class="font-label-sm text-[11px] text-on-surface-variant leading-tight">
+<strong>Statutory Compliance Note:</strong> Estimated savings are analytical projections, not guaranteed yields. Actual output varies with seasonal cloud cover, panel inclination, ambient dust, and bi-directional meter calibration by BSES Rajdhani.
+        </p>
+</div>
+</div>
+<!-- Actions Deck -->
+<div class="pt-2 space-y-2.5">
+<button class="w-full h-12 bg-secondary text-on-secondary rounded-lg font-headline-sm text-headline-sm font-semibold flex items-center justify-center gap-2 shadow-[0_4px_16px_rgba(0,107,87,0.2)] active:scale-[0.99] transition-all" type="button">
+<span>Proceed to Regulatory Check</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+<button class="w-full h-11 bg-surface-container-lowest text-primary rounded-lg font-label-md text-label-md font-semibold flex items-center justify-center gap-2 shadow-[0_1px_4px_rgba(16,61,53,0.06)] hover:bg-surface-container-low transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px] text-secondary">download</span>
+<span>Download Feasibility Report (.PDF)</span>
+</button>
+</div>
+</div>
+</div></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-4px_20px_rgba(16,61,53,0.06)]" data-active-classes="text-secondary font-semibold bg-secondary-container/40"><div class="h-20 px-2 flex items-center justify-around"><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-12 rounded-xl text-on-surface-variant transition-all hover:text-secondary" data-path="home" href="#"><span class="material-symbols-outlined text-[22px]">solar_power</span><span class="font-label-sm text-label-sm">Home</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-12 rounded-xl transition-all text-secondary font-semibold bg-secondary-container/40" data-path="assess" href="#"><span class="material-symbols-outlined text-[22px]">calculate</span><span class="font-label-sm text-label-sm">Assess</span></a><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-12 rounded-xl text-on-surface-variant transition-all hover:text-secondary" data-path="optimise" href="#"><span class="material-symbols-outlined text-[22px]">bolt</span><span class="font-label-sm text-label-sm">Optimise</span></a><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-12 rounded-xl text-on-surface-variant transition-all hover:text-secondary" data-path="community" href="#"><span class="material-symbols-outlined text-[22px]">groups</span><span class="font-label-sm text-label-sm">Community</span></a><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-12 rounded-xl text-on-surface-variant transition-all hover:text-secondary" data-path="allocation" href="#"><span class="material-symbols-outlined text-[22px]">pie_chart</span><span class="font-label-sm text-label-sm">Allocation</span></a></div></nav></body></html>

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface": "#f4faff", "surface-container-high": "#dceaf4", "surface-container": "#e2f0f9", "tertiary-fixed": "#ffdea7", "error-container": "#ffdad6", "on-error": "#ffffff", "inverse-on-surface": "#e5f3fc", "on-surface-variant": "#404846", "secondary-fixed-dim": "#7ed7bd", "on-primary": "#ffffff", "on-background": "#101d24", "outline": "#717976", "on-primary-fixed-variant": "#234e45", "on-secondary-fixed": "#002019", "inverse-surface": "#253239", "on-tertiary-fixed-variant": "#5e4200", "surface-variant": "#d6e5ee", "primary-fixed-dim": "#a3d0c4", "tertiary": "#2e1e00", "surface-container-lowest": "#ffffff", "on-primary-container": "#7ca89d", "primary-fixed": "#bfece0", "secondary-fixed": "#9af4d8", "on-secondary-container": "#00725d", "tertiary-fixed-dim": "#f6bd4f", "primary-container": "#103d35", "on-surface": "#101d24", "surface-tint": "#3c665d", "on-secondary": "#ffffff", "secondary": "#006b57", "on-tertiary": "#ffffff", "primary": "#002620", "on-secondary-fixed-variant": "#005141", "secondary-container": "#9af4d8", "on-primary-fixed": "#00201b", "error": "#ba1a1a", "on-error-container": "#93000a", "on-tertiary-fixed": "#271900", "surface-container-highest": "#d6e5ee", "surface-dim": "#cedce5", "surface-bright": "#f4faff", "inverse-primary": "#a3d0c4", "tertiary-container": "#493200", "outline-variant": "#c0c8c5", "on-tertiary-container": "#ca962b", "surface-container-low": "#e8f6ff", "background": "#f4faff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-lg": "1.5rem", "margin-mobile": "1rem", "space-md": "1rem", "space-xs": "0.25rem", "gutter": "1.5rem", "margin": "2rem", "space-xl": "2rem", "space-sm": "0.5rem", "gutter-mobile": "1rem" }, "fontFamily": { "headline-xl": ["Manrope"], "body-lg": ["Inter"], "display-lg": ["Manrope"], "metric-md": ["Manrope"], "label-md": ["Inter"], "headline-xl-mobile": ["Manrope"], "body-md": ["Inter"], "label-sm": ["Inter"], "display-lg-mobile": ["Manrope"], "headline-lg": ["Manrope"], "metric-xl": ["Manrope"], "headline-sm": ["Manrope"], "headline-md": ["Manrope"], "body-sm": ["Inter"] }, "fontSize": { "headline-xl": ["2.25rem", {"lineHeight": "2.75rem", "letterSpacing": "-0.02em", "fontWeight": "700"}], "body-lg": ["1.125rem", {"lineHeight": "1.75rem", "letterSpacing": "-0.005em", "fontWeight": "400"}], "display-lg": ["3.5rem", {"lineHeight": "4.25rem", "letterSpacing": "-0.03em", "fontWeight": "700"}], "metric-md": ["1.5rem", {"lineHeight": "2rem", "letterSpacing": "-0.02em", "fontWeight": "600"}], "label-md": ["0.8125rem", {"lineHeight": "1.125rem", "letterSpacing": "0.01em", "fontWeight": "500"}], "headline-xl-mobile": ["1.75rem", {"lineHeight": "2.25rem", "letterSpacing": "-0.01em", "fontWeight": "600"}], "body-md": ["0.875rem", {"lineHeight": "1.375rem", "letterSpacing": "0", "fontWeight": "400"}], "label-sm": ["0.6875rem", {"lineHeight": "0.875rem", "letterSpacing": "0.04em", "fontWeight": "600"}], "display-lg-mobile": ["2.25rem", {"lineHeight": "2.75rem", "letterSpacing": "-0.02em", "fontWeight": "700"}], "headline-lg": ["1.75rem", {"lineHeight": "2.25rem", "letterSpacing": "-0.015em", "fontWeight": "600"}], "metric-xl": ["2.75rem", {"lineHeight": "3rem", "letterSpacing": "-0.03em", "fontWeight": "700"}], "headline-sm": ["1rem", {"lineHeight": "1.5rem", "letterSpacing": "0", "fontWeight": "600"}], "headline-md": ["1.25rem", {"lineHeight": "1.75rem", "letterSpacing": "-0.01em", "fontWeight": "600"}], "body-sm": ["0.75rem", {"lineHeight": "1.125rem", "letterSpacing": "0.01em", "fontWeight": "400"}] } } } };</script><style>@layer base{html,body{width:100%;margin:0;padding:0;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><style>body { min-height: max(884px, 100dvh); }</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface min-h-full flex flex-col selection:bg-secondary-container selection:text-on-secondary-container"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/90 backdrop-blur-xl shadow-[0_1px_12px_rgba(16,61,53,0.06)]"><div class="h-16 px-margin-mobile flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="Solaris Geometric Emblem" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1VRQ3ag_QUrg4F0RpgjDeg7dO5VcOfyaoOVMnuIl2OAGmbDHOYUxs2eERwlsekc4X4YPZEiFGfPCJ2p0zPYO7kbJQLSUvF3z2dlANCijd68Bpca06A2Vi1uqrvQPl7TnFRfFCSB0SsHgvs3NVpLhyvpNDZV4E-ZtB3wqovkmmQ2Zo6GtMJaSipNp0Sqqlz489QzoJnctAEJd_LUXI1cKHjEkUq_qibBtcKFTkSBu623vnQUNoBl2byPwHQ"/><div class="flex flex-col"><div class="flex items-center gap-1.5"><span class="font-headline-sm text-headline-sm text-primary tracking-tight font-bold leading-none">SOLARIS</span><span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-secondary-container/70 text-secondary font-label-sm text-label-sm leading-none font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>Delhi (BRPL)</span></div><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Main Dashboard</span></div></div><div class="flex items-center gap-1"><button aria-label="Notifications" class="relative w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-secondary hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-tertiary-fixed-dim ring-2 ring-surface"></span></button><div class="w-11 h-11 flex items-center justify-center"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shadow-[0_0_0_2px_rgba(0,107,87,0.2)]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOCw3_x5kggCZA-8gYXL_IqD9UGPInL8dDI_KLzxMKLSVw6wDKwFNvO83-jGssib42nLy1UBemp8csYhlhtpPj6c1Lv698HOaJ_r6HLI1c6eBs25G95aoANJ6YUj6G7h523c89jsYLlHU0mQqS07NMO8rlR-8LKdaA3pqrIir9Bv5DalugqUNKhcULE8HwTD_vDHSjKuhKODrhdEIqy9y6ylGpU7cX4s_rqKxr2zq5Ae4okzcjh_3QgA"/></div></div></div></header><main class="flex-1 w-full bg-surface pt-16 pb-20"><div class="flex flex-col w-full px-margin-mobile pb-8 space-y-space-md">
+<!-- Welcome & Identity Strip -->
+<div class="flex flex-col gap-2 pt-2">
+<div class="inline-flex items-center gap-1.5 self-start px-2.5 py-1 rounded-full bg-secondary-container/60 text-on-secondary-container font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">apartment</span>
+<span>Pocket 2 RWA · VNM Cluster Active</span>
+</div>
+<div>
+<h1 class="font-headline-xl-mobile text-headline-xl-mobile text-primary tracking-tight font-bold">Good morning, Rohit.</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Let's make your solar future brighter today.</p>
+</div>
+</div>
+<!-- Ambient Monsoon/System Alert Banner -->
+<div class="w-full bg-surface-container-high rounded-xl p-space-sm flex items-center justify-between gap-3 shadow-sm">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-7 h-7 rounded-lg bg-tertiary-fixed flex items-center justify-center shrink-0 text-on-tertiary-fixed">
+<span class="material-symbols-outlined text-[18px]">solar_power</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+<span class="font-semibold text-primary">Monsoon tilt active:</span> Inverter loss auto-calibrated to 0.4%.
+      </p>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px] shrink-0">verified</span>
+</div>
+<!-- KPI Metric Cards Grid (2x2) -->
+<div class="grid grid-cols-2 gap-space-sm">
+<!-- Card 1: Savings -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Est. Monthly Savings</span>
+<span class="material-symbols-outlined text-secondary text-[20px]">currency_rupee_circle</span>
+</div>
+<div>
+<div class="flex items-baseline gap-1">
+<span class="font-headline-md text-headline-md text-primary font-bold tracking-tight">₹3,480</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-medium">/mo</span>
+</div>
+<div class="mt-1.5 flex items-center gap-1">
+<span class="inline-block px-1.5 py-0.5 rounded-full bg-secondary-container/70 text-secondary font-label-sm text-[10px] font-bold">+18% vs grid</span>
+</div>
+<p class="mt-2 font-body-sm text-[11px] text-on-surface-variant/80 leading-tight">Delhi DERC Slab 4</p>
+</div>
+</div>
+<!-- Card 2: Solar Capacity -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Solar Capacity</span>
+<span class="material-symbols-outlined text-secondary text-[20px]">wb_sunny</span>
+</div>
+<div>
+<div class="flex items-baseline gap-1">
+<span class="font-headline-md text-headline-md text-primary font-bold tracking-tight">6.8</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-medium">kWp</span>
+</div>
+<div class="mt-1.5 flex items-center gap-1">
+<span class="inline-block px-1.5 py-0.5 rounded-full bg-secondary-container/70 text-secondary font-label-sm text-[10px] font-bold">Optimal</span>
+</div>
+<p class="mt-2 font-body-sm text-[11px] text-on-surface-variant/80 leading-tight">Terrace: 720 sq.ft unshaded</p>
+</div>
+</div>
+<!-- Card 3: Active Community Projects -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Pod Projects</span>
+<span class="material-symbols-outlined text-secondary text-[20px]">hub</span>
+</div>
+<div>
+<div class="flex items-baseline gap-1">
+<span class="font-headline-md text-headline-md text-primary font-bold tracking-tight">1 Joined</span>
+</div>
+<div class="mt-1.5 flex items-center gap-1">
+<span class="inline-block px-1.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-[10px] font-bold">8/12 Flats</span>
+</div>
+<p class="mt-2 font-body-sm text-[11px] text-on-surface-variant/80 leading-tight">Block C RWA Solar Pod</p>
+</div>
+</div>
+<!-- Card 4: Regulatory Status -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Regulatory VNM</span>
+<span class="material-symbols-outlined text-secondary text-[20px]">gavel</span>
+</div>
+<div>
+<div class="flex items-baseline gap-1">
+<span class="font-headline-sm text-headline-sm text-primary font-bold leading-tight">Pre-Approved</span>
+</div>
+<div class="mt-1.5 flex items-center gap-1">
+<span class="inline-block px-1.5 py-0.5 rounded-full bg-secondary-container/70 text-secondary font-label-sm text-[10px] font-bold">DERC Compliant</span>
+</div>
+<p class="mt-2 font-body-sm text-[11px] text-on-surface-variant/80 leading-tight">BRPL Queue #418</p>
+</div>
+</div>
+</div>
+<!-- Recommended Next Action (Elevated Hero Priority Banner) -->
+<div class="relative overflow-hidden bg-primary-container text-on-primary rounded-xl p-space-lg shadow-md">
+<div class="absolute -right-6 -bottom-6 w-32 h-32 bg-secondary/20 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-center justify-between mb-3">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-fixed animate-ping"></span>
+        Action Required · 2 Days Remaining
+      </div>
+<span class="material-symbols-outlined text-primary-fixed-dim text-[20px]">draw</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm font-semibold tracking-tight text-white mb-2">
+      Digitally Sign Member Consent for 12 kWp Pod
+    </h2>
+<p class="font-body-md text-body-md text-primary-fixed-dim/90 mb-4 leading-relaxed">
+      RWA Block C has reached 10 participating flats. Review allocation distribution and authorize single-point BRPL virtual net metering application.
+    </p>
+<div class="flex flex-col sm:flex-row gap-2.5 pt-1">
+<button class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-space-md py-2.5 bg-tertiary-fixed-dim text-on-tertiary-fixed font-headline-sm text-headline-sm rounded-lg active:scale-95 transition-transform shadow-sm" type="button">
+<span>Review &amp; Sign Agreement</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+<button class="w-full sm:w-auto inline-flex items-center justify-center px-space-md py-2.5 bg-surface-container-lowest/10 hover:bg-surface-container-lowest/20 text-on-primary font-headline-sm text-headline-sm rounded-lg transition-colors" type="button">
+        View Financial Impact
+      </button>
+</div>
+</div>
+<!-- Generation & Consumption Forecast Card -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-4">
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-primary font-bold">Generation vs Consumption</span>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-medium">30-Day Model</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm font-medium">Live Model Simulation · Lat 28.61° N</span>
+</div>
+</div>
+<!-- Visual SVG Chart -->
+<div class="relative w-full h-44 bg-surface-container-low rounded-xl p-3 flex flex-col justify-between overflow-hidden">
+<!-- Chart Header Stats Inside -->
+<div class="flex items-center justify-between z-10 text-on-surface">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-sm bg-secondary"></span>
+<span class="font-label-sm text-label-sm font-semibold text-primary">Solar: 540 kWh</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-sm bg-tertiary-fixed-dim"></span>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface-variant">Grid: 610 kWh</span>
+</div>
+</div>
+<span class="font-label-sm text-[11px] text-secondary font-bold bg-secondary-container/50 px-1.5 py-0.5 rounded">Peak June</span>
+</div>
+<!-- SVG Area & Bar Curves -->
+<div class="w-full h-24 relative flex items-end">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 320 90">
+<defs>
+<lineargradient id="solarGlow" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#006b57" stop-opacity="0.35"></stop>
+<stop offset="100%" stop-color="#006b57" stop-opacity="0.0"></stop>
+</lineargradient>
+<lineargradient id="gridGlow" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#f6bd4f" stop-opacity="0.25"></stop>
+<stop offset="100%" stop-color="#f6bd4f" stop-opacity="0.0"></stop>
+</lineargradient>
+</defs>
+<!-- Grid Line Baseline (Dotted) -->
+<line stroke="#c0c8c5" stroke-dasharray="3 3" stroke-width="1" x1="0" x2="320" y1="20" y2="20"></line>
+<line stroke="#c0c8c5" stroke-dasharray="3 3" stroke-width="1" x1="0" x2="320" y1="55" y2="55"></line>
+<!-- Consumption Grid Curve (Amber) -->
+<path d="M0,45 Q40,40 80,30 T160,25 T240,35 T320,28 L320,90 L0,90 Z" fill="url(#gridGlow)"></path>
+<path d="M0,45 Q40,40 80,30 T160,25 T240,35 T320,28" fill="none" stroke="#ca962b" stroke-linecap="round" stroke-width="2"></path>
+<!-- Generation Solar Curve (Emerald) -->
+<path d="M0,80 Q40,75 80,50 T160,15 T240,40 T320,70 L320,90 L0,90 Z" fill="url(#solarGlow)"></path>
+<path d="M0,80 Q40,75 80,50 T160,15 T240,40 T320,70" fill="none" stroke="#006b57" stroke-linecap="round" stroke-width="2.5"></path>
+<!-- Peak Marker Pin -->
+<circle cx="160" cy="15" fill="#006b57" r="4.5" stroke="#ffffff" stroke-width="1.5"></circle>
+</svg>
+</div>
+<!-- X-Axis Labels -->
+<div class="flex justify-between text-on-surface-variant font-label-sm text-[10px] pt-1">
+<span>Week 1</span>
+<span>Week 2</span>
+<span class="font-bold text-primary">Week 3 (Solstice)</span>
+<span>Week 4</span>
+</div>
+</div>
+<!-- Quick Stats Below Chart -->
+<div class="grid grid-cols-2 gap-2 pt-1">
+<div class="bg-surface-container rounded-lg p-2.5 flex items-center justify-between">
+<div>
+<span class="block font-label-sm text-[11px] text-on-surface-variant">Grid Bill Offset</span>
+<span class="font-headline-sm text-headline-sm font-bold text-secondary">78%</span>
+</div>
+<span class="material-symbols-outlined text-secondary text-[24px]">energy_savings_leaf</span>
+</div>
+<div class="bg-surface-container rounded-lg p-2.5 flex items-center justify-between">
+<div>
+<span class="block font-label-sm text-[11px] text-on-surface-variant">Export Surplus</span>
+<span class="font-headline-sm text-headline-sm font-bold text-primary">₹640</span>
+</div>
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[24px]">payments</span>
+</div>
+</div>
+</div>
+<!-- Rooftop Photo Verification Snapshot -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex items-center gap-3">
+<div class="w-16 h-16 rounded-lg bg-surface-container overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="High-resolution aerial satellite capture of a modern residential apartment terrace in New Delhi with high solar irradiance and clean demarcation tiles, photorealistic and precise architecture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuACjPZWpPpvm_GacMBAT1-ITQUP88NeHtd2HophXbXrsq79Hp_A9SMhNvq4KkNt5kSenejbRaJ4Hnjf9oxZo9oIg_imQDdIY_sbthHKL3bN8Py9MTVXdG-YM_LUP8AGlvBFw22tfnBYtjcoP5jfbXqncqR197PObSRVCQkhBwj58XDjuF1FS890lQYiaGK-e_2Wsx323l6ZdYsGWAsxleiV1F85kSC6TNLvqjKHHyXs2Db8ATCuhwUbzQ"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-sm text-primary font-bold truncate">Terrace C-Block LiDAR Scanned</span>
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+</div>
+<p class="font-body-sm text-[11px] text-on-surface-variant line-clamp-1 mt-0.5">720 sq.ft unobstructed sun path · 94.2% solar access</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="font-label-sm text-[10px] text-secondary font-semibold bg-secondary-container/50 px-1.5 py-0.2 rounded">Simulated by Solaris Engine</span>
+</div>
+</div>
+</div>
+<!-- Solar Pod Approval Timeline Card -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary font-bold">Pod Approval Milestones</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Block C Virtual Net Metering (VNM)</p>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-bold bg-secondary-container/40 px-2 py-0.5 rounded-full">Step 3 of 5</span>
+</div>
+<!-- Timeline Steps Horizontal / Scroll Flow -->
+<div class="flex items-start gap-2 pt-2 overflow-x-auto pb-1">
+<!-- Step 1: Spatial Feasibility (Done) -->
+<div class="flex-1 min-w-[84px] flex flex-col items-center text-center gap-1.5">
+<div class="w-7 h-7 rounded-full bg-secondary text-on-secondary flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<span class="font-label-sm text-[11px] font-bold text-primary leading-tight">Spatial Feasibility</span>
+<span class="font-body-sm text-[10px] text-secondary font-medium">Passed</span>
+</div>
+<div class="w-5 h-0.5 bg-secondary mt-3.5 shrink-0"></div>
+<!-- Step 2: Member Quota Lock (Done) -->
+<div class="flex-1 min-w-[84px] flex flex-col items-center text-center gap-1.5">
+<div class="w-7 h-7 rounded-full bg-secondary text-on-secondary flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<span class="font-label-sm text-[11px] font-bold text-primary leading-tight">Quota Lock</span>
+<span class="font-body-sm text-[10px] text-secondary font-medium">10 Flats</span>
+</div>
+<div class="w-5 h-0.5 bg-secondary mt-3.5 shrink-0"></div>
+<!-- Step 3: BRPL DISCOM Submission (Active) -->
+<div class="flex-1 min-w-[90px] flex flex-col items-center text-center gap-1.5">
+<div class="w-7 h-7 rounded-full bg-tertiary-fixed-dim text-on-tertiary-fixed flex items-center justify-center shadow-sm ring-4 ring-tertiary-fixed/40 animate-pulse">
+<span class="material-symbols-outlined text-[16px]">hourglass_top</span>
+</div>
+<span class="font-label-sm text-[11px] font-bold text-primary leading-tight">DISCOM Filing</span>
+<span class="font-body-sm text-[10px] text-on-tertiary-container font-semibold">Oct 28</span>
+</div>
+<div class="w-5 h-0.5 bg-surface-container-high mt-3.5 shrink-0"></div>
+<!-- Step 4: Bi-directional Meter Install (Pending) -->
+<div class="flex-1 min-w-[84px] flex flex-col items-center text-center gap-1.5 opacity-60">
+<div class="w-7 h-7 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">speed</span>
+</div>
+<span class="font-label-sm text-[11px] font-medium text-on-surface-variant leading-tight">Smart Meter</span>
+<span class="font-body-sm text-[10px] text-outline">Pending</span>
+</div>
+<div class="w-5 h-0.5 bg-surface-container-high mt-3.5 shrink-0"></div>
+<!-- Step 5: VNM Credit Settlement (Pending) -->
+<div class="flex-1 min-w-[84px] flex flex-col items-center text-center gap-1.5 opacity-60">
+<div class="w-7 h-7 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">receipt_long</span>
+</div>
+<span class="font-label-sm text-[11px] font-medium text-on-surface-variant leading-tight">Credit Active</span>
+<span class="font-body-sm text-[10px] text-outline">Nov 15</span>
+</div>
+</div>
+</div>
+<!-- Recent Community Activity Feed -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-3">
+<div class="flex items-center justify-between mb-1">
+<h3 class="font-headline-sm text-headline-sm text-primary font-bold">Community Activity</h3>
+<button class="font-label-sm text-label-sm text-secondary font-semibold hover:underline" type="button">
+        View All
+      </button>
+</div>
+<div class="space-y-3">
+<!-- Item 1 -->
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-full bg-secondary-container/70 text-on-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">payments</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-baseline justify-between gap-1">
+<span class="font-headline-sm text-sm text-primary font-bold truncate">Flat 302 (Col. Mehta)</span>
+<span class="font-body-sm text-[11px] text-outline shrink-0">2 hrs ago</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+            Committed ₹45,000 CAPEX share for 2.4 kW allocation.
+          </p>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">engineering</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-baseline justify-between gap-1">
+<span class="font-headline-sm text-sm text-primary font-bold truncate">BSES Rajdhani Power Ltd</span>
+<span class="font-body-sm text-[11px] text-outline shrink-0">Yesterday</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+            Completed DT (Distribution Transformer) load capacity feasibility study.
+          </p>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="flex items-start gap-3">
+<div class="w-9 h-9 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">tune</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-baseline justify-between gap-1">
+<span class="font-headline-sm text-sm text-primary font-bold truncate">Solaris AI Solver</span>
+<span class="font-body-sm text-[11px] text-outline shrink-0">2 days ago</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+            Auto-rebalanced credit ratio to 100.0% zero-shortfall across 10 subscribers.
+          </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Interactive Quick Launcher Strip -->
+<div class="p-space-md rounded-xl bg-surface-container flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-lowest flex items-center justify-center shadow-sm text-secondary">
+<span class="material-symbols-outlined text-[22px]">contact_support</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-sm font-bold text-primary">Need technical assistance?</h4>
+<p class="font-body-sm text-[11px] text-on-surface-variant">BRPL regulatory desk hotline available 10 AM - 6 PM</p>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-lowest text-secondary font-label-sm text-label-sm font-semibold active:scale-95 transition-transform shadow-sm" type="button">
+      Call Officer
+    </button>
+</div>
+</div></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/95 backdrop-blur-xl shadow-[0_-4px_20px_rgba(16,61,53,0.06)]" data-active-classes="text-secondary font-semibold bg-secondary-container/40"><div class="h-20 px-2 flex items-center justify-around"><a aria-current="page" class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-12 rounded-xl transition-all active:scale-95 text-secondary font-semibold bg-secondary-container/40" data-path="main-dashboard" href="#"><span class="material-symbols-outlined text-[22px]">solar_power</span><span class="font-label-sm text-label-sm">Home</span></a><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-12 rounded-xl text-on-surface-variant transition-all hover:text-secondary active:scale-95" data-path="regulatory-eligibility-checker" href="#"><span class="material-symbols-outlined text-[22px]">fact_check</span><span class="font-label-sm text-label-sm">Assess</span></a><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-12 rounded-xl text-on-surface-variant transition-all hover:text-secondary active:scale-95" data-path="smart-optimiser" href="#"><span class="material-symbols-outlined text-[22px]">bolt</span><span class="font-label-sm text-label-sm">Optimise</span></a><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-12 rounded-xl text-on-surface-variant transition-all hover:text-secondary active:scale-95" data-path="community-solar-workspace" href="#"><span class="material-symbols-outlined text-[22px]">groups</span><span class="font-label-sm text-label-sm">Community</span></a><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-12 rounded-xl text-on-surface-variant transition-all hover:text-secondary active:scale-95" data-path="credit-allocation" href="#"><span class="material-symbols-outlined text-[22px]">pie_chart</span><span class="font-label-sm text-label-sm">Allocation</span></a></div></nav></body></html>

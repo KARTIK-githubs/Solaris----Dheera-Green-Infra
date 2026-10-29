@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #0F2D24;
+  --color-primary-container: #163A2F;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #A3D0C4;
+  --color-primary-fixed: #BFECE0;
+  --color-primary-fixed-dim: #A3D0C4;
+  --color-secondary: #163A2F;
+  --color-secondary-container: #E1EBE6;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #0F2D24;
+  --color-secondary-fixed: #E1EBE6;
+  --color-secondary-fixed-dim: #CBD8D2;
+  --color-tertiary: #A85913;
+  --color-tertiary-container: #FBF0E2;
+  --color-on-tertiary-container: #A85913;
+  --color-tertiary-fixed: #FFDEA7;
+  --color-tertiary-fixed-dim: #D9822B;
+  --color-on-tertiary-fixed: #422000;
+  --color-surface: #FBFBF9;
+  --color-surface-dim: #ECEEE8;
+  --color-surface-bright: #FFFFFF;
+  --color-surface-container-lowest: #FFFFFF;
+  --color-surface-container-low: #F8FAF7;
+  --color-surface-container: #F4F5F0;
+  --color-surface-container-high: #ECEEE8;
+  --color-surface-container-highest: #E2E5DF;
+  --color-on-surface: #1A2421;
+  --color-on-surface-variant: #374340;
+  --color-outline: #606D69;
+  --color-outline-variant: #CBD2CA;
+
+  --font-headline: "Manrope", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--color-on-surface);
+    background-color: var(--color-surface);
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-headline);
+  }
+
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-secondary);
+    outline-offset: 3px;
+  }
+}
+
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes landing-float {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -6px, 0);
+  }
+}
+
+.landing-rise {
+  animation: landing-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.landing-float {
+  animation: landing-float 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .landing-rise,
+  .landing-float {
+    animation: none;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media print {
+  header, nav, aside, button:not(.print-include) {
+    display: none !important;
+  }
+
+  body {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+  }
+
+  .print-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+
