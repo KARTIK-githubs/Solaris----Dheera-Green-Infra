@@ -4,7 +4,9 @@ import path from 'path';
 import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
+  
   return {
+    base: '/Solaris----Dheera-Green-Infra/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
