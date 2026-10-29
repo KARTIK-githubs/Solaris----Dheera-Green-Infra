@@ -10,12 +10,12 @@ export async function connectDB(uri?: string): Promise<typeof mongoose> {
   const connectionUri = uri || process.env.MONGODB_URI || DEFAULT_URI;
   try {
     const conn = await mongoose.connect(connectionUri, {
-      serverSelectionTimeoutMS: 2500,
+      serverSelectionTimeoutMS: 5000,
     });
     console.log(`[MongoDB] Connected to database: ${conn.connection.name} at ${conn.connection.host}:${conn.connection.port}`);
     return conn;
   } catch (error: any) {
-    console.error(`[MongoDB] Connection error to ${connectionUri}:`, error.message);
+    console.error('[MongoDB] Connection error:', error.message);
     throw error;
   }
 }

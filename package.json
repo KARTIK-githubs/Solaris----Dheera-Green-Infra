@@ -10,7 +10,7 @@
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "test": "tsx src/tests/solarisTests.ts",
-    "server": "tsx server/index.ts",
+    "server": "tsx server/start.ts",
     "dev:all": "concurrently \"npm run server\" \"npm run dev\"",
     "test:backend": "tsx server/tests/backendTests.ts",
     "test:all": "npm test && npm run test:backend"

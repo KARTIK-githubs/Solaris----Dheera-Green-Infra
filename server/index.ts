@@ -113,8 +113,3 @@ export async function startServer(port: number | string = PORT) {
     process.exit(1);
   }
 }
-
-// Self-executing when run directly via tsx server/index.ts
-if (typeof process !== 'undefined' && process.argv && process.argv[1] && process.argv[1].includes('server')) {
-  startServer();
-}
