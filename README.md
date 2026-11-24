@@ -1,3 +1,5 @@
+> **Project context.** This repository documents the Dheera Green Infra solar-planning collaboration. The [Solaris hackathon repository](https://github.com/KARTIK-githubs/Solaris) retains the team prototype and its original contributor history.
+
 # SOLARIS — Together We Shine Brighter
 
 An intelligent, regulation-aware solar adoption, community solar planning, affordability optimisation, and transparent credit allocation platform designed for India, starting with Delhi (BSES Rajdhani Power Limited, BSES Yamuna Power Limited, Tata Power DDL).
