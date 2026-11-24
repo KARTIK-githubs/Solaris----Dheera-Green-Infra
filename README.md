@@ -1,3 +1,5 @@
+> **Local setup.** Run `npm ci --legacy-peer-deps` from the repository root before starting the frontend and API. The database-backed tests require a local MongoDB instance and use a separate test database.
+
 > **Project context.** This repository documents the Dheera Green Infra solar-planning collaboration. The [Solaris hackathon repository](https://github.com/KARTIK-githubs/Solaris) retains the team prototype and its original contributor history.
 
 # SOLARIS — Together We Shine Brighter
