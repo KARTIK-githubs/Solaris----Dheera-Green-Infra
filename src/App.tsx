@@ -173,7 +173,7 @@ const RouterView: React.FC = () => {
           <Sidebar />
           <BottomNav />
           <ConsentModal />
-          <AiAdvisorModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
+          <AiAdvisorModal key={session?.id} isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
         </>
       ) : (
         <main className="flex-1 w-full"><React.Fragment key={session?.id ?? 'public'}>{content}</React.Fragment></main>
