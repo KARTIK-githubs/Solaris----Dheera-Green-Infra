@@ -20,6 +20,14 @@ const API_BASE = typeof window !== 'undefined' ? '/api' : 'http://localhost:5000
 
 // A tab's stale UI cannot request records using another tab's new session.
 let expectedAccountId: string | null = null;
+let sessionInvalidated: (() => void) | undefined;
+
+export function onApiSessionInvalidated(listener: () => void) {
+  sessionInvalidated = listener;
+  return () => {
+    if (sessionInvalidated === listener) sessionInvalidated = undefined;
+  };
+}
 
 export function setApiAccount(id: string | null) {
   expectedAccountId = id;
@@ -27,9 +35,9 @@ export function setApiAccount(id: string | null) {
 
 async function request<T = any>(path: string, method = 'GET', payload?: unknown): Promise<ApiResponse<T>> {
   const headers = new Headers();
-  if (expectedAccountId && !path.startsWith('/auth/')) {
-    headers.set('X-Solaris-Account', expectedAccountId);
-  }
+  const accountId = expectedAccountId;
+  const sessionBound = path === '/auth/logout' || (!path.startsWith('/auth/') && path !== '/health');
+  if (accountId && sessionBound) headers.set('X-Solaris-Account', accountId);
   if (method !== 'GET') headers.set('X-Solaris-Request', '1');
   if (payload !== undefined) headers.set('Content-Type', 'application/json');
   try {
@@ -45,6 +53,10 @@ async function request<T = any>(path: string, method = 'GET', payload?: unknown)
     }
     const result = await response.json();
     if (!response.ok) {
+      if (accountId && sessionBound && expectedAccountId === accountId
+        && (response.status === 401 || (response.status === 409 && result.code === 'ACCOUNT_CHANGED'))) {
+        sessionInvalidated?.();
+      }
       return {
         success: false,
         httpStatus: response.status,
