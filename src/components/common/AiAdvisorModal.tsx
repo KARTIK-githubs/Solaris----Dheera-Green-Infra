@@ -5,14 +5,12 @@ import { useApp } from '../../context/AppContext';
 interface AiAdvisorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialContext?: any;
   defaultPrompt?: string;
 }
 
 export const AiAdvisorModal: React.FC<AiAdvisorModalProps> = ({
   isOpen,
   onClose,
-  initialContext,
   defaultPrompt
 }) => {
   const { aiMessages, setAiMessages, workspaceMode, currentUser } = useApp();
@@ -43,11 +41,7 @@ export const AiAdvisorModal: React.FC<AiAdvisorModalProps> = ({
     setLoading(true);
 
     try {
-      const res = await apiClient.askAssistant(textToSend.trim(), {
-        ...initialContext,
-        workspaceMode,
-        systemCapacityKw: 6.8
-      });
+      const res = await apiClient.askAssistant(textToSend.trim());
       if (res.success && res.data) {
         setIsLiveModelActive(res.data.isLiveModel);
         setAiMessages((prev) => [

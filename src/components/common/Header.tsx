@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { AiAdvisorModal } from './AiAdvisorModal';
 
 interface HeaderProps {
   subtitle?: string;
@@ -19,7 +18,6 @@ export const Header: React.FC<HeaderProps> = ({ subtitle = 'Dheera Green Infra Â
     clearBackendError,
     workspaceMode,
     setWorkspaceMode,
-    isAiModalOpen,
     setIsAiModalOpen
   } = useApp();
 
@@ -200,10 +198,6 @@ export const Header: React.FC<HeaderProps> = ({ subtitle = 'Dheera Green Infra Â
       </div>
     </header>
 
-    <AiAdvisorModal
-      isOpen={isAiModalOpen}
-      onClose={() => setIsAiModalOpen(false)}
-    />
   </>
 );
 };
