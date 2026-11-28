@@ -1,4 +1,6 @@
-import { Router, Request, Response } from 'express';
+import { actor } from '../auth/access';
+import { onlyKeys, text } from '../validation';
+import { Router, Request, Response, NextFunction } from 'express';
 import { CommunityProject } from '../models/CommunityProject';
 import { CommunityMember } from '../models/CommunityMember';
 import { logAuditEvent } from '../services/auditService';
@@ -13,7 +15,7 @@ const VALID_STATUSES = ['signed_deposited', 'kyc_verified', 'pending_invite', 'w
  * GET /api/community
  * Fetch the community project header and all participant roster members
  */
-communityRouter.get('/', async (_req: Request, res: Response) => {
+communityRouter.get('/', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     if (!isDbConnected()) {
       await ensureDbConnected();
@@ -26,15 +28,11 @@ communityRouter.get('/', async (_req: Request, res: Response) => {
       });
     }
 
-    let project = await CommunityProject.findOne({ projectId: INITIAL_COMMUNITY.id });
-    let members = await CommunityMember.find().sort({ memberId: 1 });
+    const project = await CommunityProject.findOne({ projectId: INITIAL_COMMUNITY.id });
+    const members = await CommunityMember.find().sort({ memberId: 1 });
 
-    // If empty, auto-seed
-    if (!project || members.length === 0) {
-      const { seedDatabase } = await import('../seed/seedData');
-      await seedDatabase();
-      project = await CommunityProject.findOne({ projectId: INITIAL_COMMUNITY.id });
-      members = await CommunityMember.find().sort({ memberId: 1 });
+    if (!project) {
+      return res.status(404).json({ success: false, error: 'Community roster has not been configured.' });
     }
 
     const activeMembers = members.filter(m => m.status !== 'withdrawn');
@@ -56,12 +54,8 @@ communityRouter.get('/', async (_req: Request, res: Response) => {
       },
       timestamp: new Date().toISOString()
     });
-  } catch (error: any) {
-    console.error('[CommunityRoute] Error:', error.message);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to retrieve community data: ' + error.message
-    });
+  } catch (error) {
+    next(error);
   }
 });
 
@@ -69,7 +63,7 @@ communityRouter.get('/', async (_req: Request, res: Response) => {
  * PATCH /api/community/members/:id/status
  * Update a member's participation lifecycle status (e.g. withdraw or re-admit)
  */
-communityRouter.patch('/members/:id/status', async (req: Request, res: Response) => {
+communityRouter.patch('/members/:id/status', async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!isDbConnected()) {
       await ensureDbConnected();
@@ -83,23 +77,24 @@ communityRouter.patch('/members/:id/status', async (req: Request, res: Response)
     }
 
     const { id } = req.params;
-    const { status, operatorName } = req.body;
+    const { status } = req.body ?? {};
 
-    if (!id || typeof id !== 'string') {
+    if (!text(id, 64) || !/^[a-zA-Z0-9_-]+$/.test(id)) {
       return res.status(400).json({ success: false, error: 'Member id is required.' });
     }
 
-    if (!status || !VALID_STATUSES.includes(status)) {
+    if (!onlyKeys(req.body, ['status']) || !VALID_STATUSES.includes(status)) {
       return res.status(400).json({
         success: false,
-        error: `Invalid status '${status}'. Must be one of: ${VALID_STATUSES.join(', ')}`
+        error: 'Invalid member status.'
       });
     }
 
     // Find member by memberId or _id
-    const member = await CommunityMember.findOne({
-      $or: [{ memberId: id }, { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }]
-    });
+    const match = /^[0-9a-fA-F]{24}$/.test(id)
+      ? { $or: [{ memberId: id }, { _id: id }] }
+      : { memberId: id };
+    const member = await CommunityMember.findOne(match);
 
     if (!member) {
       return res.status(404).json({ success: false, error: `Member with id '${id}' not found.` });
@@ -114,7 +109,7 @@ communityRouter.patch('/members/:id/status', async (req: Request, res: Response)
       action: status === 'withdrawn' ? 'MEMBER_WITHDRAWAL' : 'MEMBER_STATUS_UPDATE',
       category: 'lifecycle',
       details: `Member ${member.flatNumber} (${member.ownerName}) transitioned from '${previousStatus}' to '${status}'.`,
-      actor: operatorName || 'RWA Coordinator Console'
+      actor: actor(res).id
     });
 
     return res.json({
@@ -123,54 +118,12 @@ communityRouter.patch('/members/:id/status', async (req: Request, res: Response)
       previousStatus,
       timestamp: new Date().toISOString()
     });
-  } catch (error: any) {
-    console.error('[CommunityRoute] Status update error:', error.message);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to update member status: ' + error.message
-    });
+  } catch (error) {
+    next(error);
   }
 });
 
-/**
- * POST /api/community/reset
- * Reset community cohort to initial state (for repeatable testing and demonstrations)
- */
-communityRouter.post('/reset', async (_req: Request, res: Response) => {
-  try {
-    if (!isDbConnected()) {
-      await ensureDbConnected();
-    }
-    if (!isDbConnected()) {
-      return res.status(503).json({
-        success: false,
-        error: 'MongoDB is disconnected. Community cohort cannot be reset in database.',
-        database: 'disconnected'
-      });
-    }
-
-    await CommunityMember.deleteMany({});
-    await CommunityProject.deleteMany({});
-
-    const { seedDatabase } = await import('../seed/seedData');
-    await seedDatabase();
-
-    await logAuditEvent({
-      action: 'COHORT_RESET',
-      category: 'system',
-      details: 'Community cohort was restored to initial seed state.',
-      actor: 'Admin / Demonstration Controller'
-    });
-
-    return res.json({
-      success: true,
-      message: 'Community roster and project successfully restored to initial state.',
-      timestamp: new Date().toISOString()
-    });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to reset community cohort: ' + error.message
-    });
-  }
+// A database-wide reset is not available through the application API.
+communityRouter.post('/reset', (_req, res) => {
+  res.status(410).json({ success: false, error: 'Community reset is unavailable through the API.' });
 });

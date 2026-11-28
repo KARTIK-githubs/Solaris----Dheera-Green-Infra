@@ -1,3 +1,5 @@
+import { actor } from '../auth/access';
+import { onlyKeys, record, text } from '../validation';
 import { Router, Request, Response } from 'express';
 
 export const aiRouter = Router();
@@ -93,9 +95,11 @@ export function generateOfflineAdvisory(prompt: string, context?: any): string {
  */
 aiRouter.post('/assistant', async (req: Request, res: Response) => {
   try {
-    const { prompt, context } = req.body || {};
+    const { prompt, context: suppliedContext } = req.body ?? {};
+    const context = { ...(record(suppliedContext) ? suppliedContext : {}), isEmployee: actor(res).role !== 'customer', userRole: actor(res).role };
 
-    if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
+    if (!onlyKeys(req.body, ['prompt', 'context']) || !text(prompt, 2000)
+      || (suppliedContext !== undefined && (!record(suppliedContext) || JSON.stringify(suppliedContext).length > 8000))) {
       return res.status(400).json({
         success: false,
         error: 'Prompt string is required.'
@@ -179,9 +183,9 @@ CONVERSATIONAL RULES:
       },
       timestamp: new Date().toISOString()
     });
-  } catch (error: any) {
-    console.warn('[AIRoute] Groq API call error, falling back gracefully:', error?.message || error);
-    const offlineReply = generateOfflineAdvisory(req.body?.prompt, req.body?.context);
+  } catch {
+    console.warn('[AIRoute] Groq request failed.');
+    const offlineReply = generateOfflineAdvisory(req.body?.prompt, { isEmployee: actor(res).role !== 'customer' });
     return res.json({
       success: true,
       data: {
