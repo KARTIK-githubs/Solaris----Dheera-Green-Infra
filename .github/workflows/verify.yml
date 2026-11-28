@@ -9,6 +9,16 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      mongo:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ping:1}).ok'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -16,5 +26,6 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci --legacy-peer-deps
-      - run: npm test
+      - run: npm run lint
+      - run: npm run test:all
       - run: npm run build

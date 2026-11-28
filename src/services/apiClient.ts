@@ -1,256 +1,97 @@
-/**
- * Solaris API Client for Express/MongoDB backend.
- * Uses relative `/api` paths forwarded by Vite reverse proxy (or direct on same origin).
- */
+import type { OptimisationParams, SolarCalculationResult } from '../types';
+
+export interface AccountSession {
+  id: string;
+  name: string;
+  email: string;
+  role: 'customer' | 'employee' | 'admin';
+}
 
 export interface ApiResponse<T = any> {
   success?: boolean;
   status?: string;
   data?: T;
   error?: string;
-  timestamp?: string;
-  service?: string;
-  database?: {
-    status: string;
-    name?: string;
-    host?: string;
-    port?: number;
-  };
-  isSyntheticDataEnforced?: boolean;
-  jurisdiction?: string;
-  attribution?: string;
-  systemTime?: string;
+  httpStatus?: number;
+  database?: { status: string };
 }
 
 const API_BASE = typeof window !== 'undefined' ? '/api' : 'http://localhost:5000/api';
 
-export const apiClient = {
-  /**
-   * Health & Database Connection Probe
-   */
-  async checkHealth(): Promise<ApiResponse> {
-    try {
-      const res = await fetch(`${API_BASE}/health`);
-      if (!res.ok) {
-        return { success: false, error: `Health check failed with HTTP ${res.status}` };
-      }
-      return await res.json();
-    } catch (err: any) {
-      return { success: false, error: `Backend unavailable: ${err.message}` };
-    }
-  },
+// A tab's stale UI cannot request records using another tab's new session.
+let expectedAccountId: string | null = null;
+let sessionInvalidated: (() => void) | undefined;
 
-  /**
-   * Fetch community project and member roster from MongoDB
-   */
-  async getCommunity(): Promise<ApiResponse> {
-    try {
-      const res = await fetch(`${API_BASE}/community`);
-      if (!res.ok) {
-        const text = await res.text();
-        return { success: false, error: `HTTP ${res.status}: ${text || 'Failed to fetch community'}` };
-      }
-      return await res.json();
-    } catch (err: any) {
-      return { success: false, error: `Backend offline: ${err.message}` };
-    }
-  },
+export function onApiSessionInvalidated(listener: () => void) {
+  sessionInvalidated = listener;
+  return () => {
+    if (sessionInvalidated === listener) sessionInvalidated = undefined;
+  };
+}
 
-  /**
-   * Update member status (e.g. withdraw or re-admit) in MongoDB
-   */
-  async updateMemberStatus(memberId: string, status: string, operatorName?: string): Promise<ApiResponse> {
-    try {
-      const res = await fetch(`${API_BASE}/community/members/${encodeURIComponent(memberId)}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, operatorName })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || `HTTP ${res.status}` };
-      }
-      return data;
-    } catch (err: any) {
-      return { success: false, error: `Failed to persist member update: ${err.message}` };
-    }
-  },
+export function setApiAccount(id: string | null) {
+  expectedAccountId = id;
+}
 
-  /**
-   * Execute and persist optimization scenario in MongoDB
-   */
-  async solveOptimisation(params: any): Promise<ApiResponse> {
-    try {
-      const res = await fetch(`${API_BASE}/optimiser/solve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(params)
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || `HTTP ${res.status}` };
-      }
-      return data;
-    } catch (err: any) {
-      return { success: false, error: `Failed to persist optimisation: ${err.message}` };
+async function request<T = any>(path: string, method = 'GET', payload?: unknown): Promise<ApiResponse<T>> {
+  const headers = new Headers();
+  const accountId = expectedAccountId;
+  const sessionBound = path === '/auth/logout' || (!path.startsWith('/auth/') && path !== '/health');
+  if (accountId && sessionBound) headers.set('X-Solaris-Account', accountId);
+  if (method !== 'GET') headers.set('X-Solaris-Request', '1');
+  if (payload !== undefined) headers.set('Content-Type', 'application/json');
+  try {
+    const response = await fetch(API_BASE + path, {
+      method,
+      headers,
+      body: payload === undefined ? undefined : JSON.stringify(payload),
+      credentials: 'same-origin',
+      signal: AbortSignal.timeout(23_000)
+    });
+    if (!response.headers.get('Content-Type')?.includes('application/json')) {
+      return { success: false, httpStatus: response.status, error: 'The API did not return a JSON response.' };
     }
-  },
-
-  /**
-   * Save solar feasibility assessment to MongoDB
-   */
-  async saveAssessment(inputs: any): Promise<ApiResponse> {
-    try {
-      const res = await fetch(`${API_BASE}/assessments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(inputs)
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || `HTTP ${res.status}` };
+    const result = await response.json();
+    if (!response.ok) {
+      if (accountId && sessionBound && expectedAccountId === accountId
+        && (response.status === 401 || (response.status === 409 && result.code === 'ACCOUNT_CHANGED'))) {
+        sessionInvalidated?.();
       }
-      return data;
-    } catch (err: any) {
-      return { success: false, error: `Failed to persist assessment: ${err.message}` };
+      return {
+        success: false,
+        httpStatus: response.status,
+        error: typeof result.error === 'string' ? result.error : `Request failed (HTTP ${response.status}).`
+      };
     }
-  },
-
-  /**
-   * Fetch recent optimization solver runs from MongoDB
-   */
-  async getOptimisationRuns(): Promise<ApiResponse> {
-    try {
-      const res = await fetch(`${API_BASE}/optimiser/runs`);
-      if (!res.ok) {
-        return { success: false, error: `HTTP ${res.status}` };
-      }
-      return await res.json();
-    } catch (err: any) {
-      return { success: false, error: `Failed to fetch optimisation runs: ${err.message}` };
-    }
-  },
-
-  /**
-   * Fetch most recently saved site assessment from MongoDB
-   */
-  async getLatestAssessment(): Promise<ApiResponse> {
-    try {
-      const res = await fetch(`${API_BASE}/assessments/latest`);
-      if (!res.ok) {
-        return { success: false, error: `HTTP ${res.status}` };
-      }
-      return await res.json();
-    } catch (err: any) {
-      return { success: false, error: `Failed to fetch latest assessment: ${err.message}` };
-    }
-  },
-
-  /**
-   * Fetch saved assessment history from MongoDB
-   */
-  async getAssessments(): Promise<ApiResponse> {
-    try {
-      const res = await fetch(`${API_BASE}/assessments`);
-      if (!res.ok) {
-        return { success: false, error: `HTTP ${res.status}` };
-      }
-      return await res.json();
-    } catch (err: any) {
-      return { success: false, error: `Failed to fetch assessments: ${err.message}` };
-    }
-  },
-
-  /**
-   * Fetch append-only audit trail from MongoDB
-   */
-  async getAuditLogs(): Promise<ApiResponse> {
-    try {
-      const res = await fetch(`${API_BASE}/audit-logs`);
-      if (!res.ok) {
-        return { success: false, error: `HTTP ${res.status}` };
-      }
-      return await res.json();
-    } catch (err: any) {
-      return { success: false, error: `Failed to fetch audit logs: ${err.message}` };
-    }
-  },
-
-  /**
-   * Request technical planning advisory from AI assistant (with offline rule-based fallback)
-   */
-  async askAssistant(prompt: string, context?: any): Promise<ApiResponse> {
-    try {
-      const res = await fetch(`${API_BASE}/ai/assistant`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, context })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || `HTTP ${res.status}` };
-      }
-      return data;
-    } catch (err: any) {
-      return { success: false, error: `Assistant unavailable: ${err.message}` };
-    }
-  },
-
-  /**
-   * Submit customer maintenance/service request to MongoDB
-   */
-  async createServiceRequest(payload: any): Promise<ApiResponse> {
-    try {
-      const res = await fetch(`${API_BASE}/support/requests`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || `HTTP ${res.status}` };
-      }
-      return data;
-    } catch (err: any) {
-      return { success: false, error: `Failed to submit service request: ${err.message}` };
-    }
-  },
-
-  /**
-   * Fetch customer service requests from MongoDB
-   */
-  async getServiceRequests(consumerNumber?: string): Promise<ApiResponse> {
-    try {
-      const query = consumerNumber ? `?consumerNumber=${encodeURIComponent(consumerNumber)}` : '';
-      const res = await fetch(`${API_BASE}/support/requests${query}`);
-      if (!res.ok) {
-        return { success: false, error: `HTTP ${res.status}` };
-      }
-      return await res.json();
-    } catch (err: any) {
-      return { success: false, error: `Failed to fetch service requests: ${err.message}` };
-    }
-  },
-
-  /**
-   * Update service request status (Employee action)
-   */
-  async updateServiceRequestStatus(ticketId: string, updates: any): Promise<ApiResponse> {
-    try {
-      const res = await fetch(`${API_BASE}/support/requests/${encodeURIComponent(ticketId)}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || `HTTP ${res.status}` };
-      }
-      return data;
-    } catch (err: any) {
-      return { success: false, error: `Failed to update service request: ${err.message}` };
-    }
+    return { ...result, httpStatus: response.status };
+  } catch {
+    return { success: false, error: 'Could not reach the Solaris API. Try again.' };
   }
+}
+
+export type SavedAssessment = SolarCalculationResult & { _id: string; createdAt: string };
+
+export const apiClient = {
+  register: (name: string, email: string, password: string) =>
+    request<AccountSession>('/auth/register', 'POST', { name, email, password }),
+  login: (email: string, password: string) =>
+    request<AccountSession>('/auth/login', 'POST', { email, password }),
+  getSession: () => request<AccountSession>('/auth/session'),
+  logout: () => request('/auth/logout', 'POST'),
+  checkHealth: () => request('/health'),
+  getCommunity: () => request('/community'),
+  updateMemberStatus: (memberId: string, status: string) =>
+    request(`/community/members/${encodeURIComponent(memberId)}/status`, 'PATCH', { status }),
+  solveOptimisation: (params: OptimisationParams) => request('/optimiser/solve', 'POST', params),
+  saveAssessment: (inputs: unknown) => request<SavedAssessment>('/assessments', 'POST', inputs),
+  getOptimisationRuns: () => request('/optimiser/runs'),
+  getLatestAssessment: () => request<SavedAssessment | null>('/assessments/latest'),
+  getAssessments: () => request<SavedAssessment[]>('/assessments'),
+  getAuditLogs: () => request('/audit-logs'),
+  askAssistant: (prompt: string, context?: unknown) => request('/ai/assistant', 'POST', { prompt, context }),
+  createServiceRequest: (payload: unknown) => request('/support/requests', 'POST', payload),
+  getServiceRequests: (consumerNumber?: string) =>
+    request('/support/requests' + (consumerNumber ? `?consumerNumber=${encodeURIComponent(consumerNumber)}` : '')),
+  updateServiceRequestStatus: (ticketId: string, updates: unknown) =>
+    request(`/support/requests/${encodeURIComponent(ticketId)}/status`, 'PATCH', updates)
 };
-
-

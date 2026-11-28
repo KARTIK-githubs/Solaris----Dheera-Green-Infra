@@ -15,6 +15,7 @@ export const CommunityPage: React.FC = () => {
     refreshCommunity,
     backendOnline,
     backendError,
+    isAuthenticated,
     clearBackendError,
   } = useApp();
 
@@ -94,7 +95,7 @@ export const CommunityPage: React.FC = () => {
     } else {
       setActionFeedback({
         type: 'error',
-        message: 'Could not contact MongoDB backend. Operating with local memory cache.',
+        message: 'Could not refresh the persisted community roster.',
       });
     }
   };
@@ -398,6 +399,8 @@ export const CommunityPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsInviteOpen(true)}
+                disabled={isAuthenticated}
+                title={isAuthenticated ? "Invites require the business workflow update" : undefined}
                 className="px-3 py-1.5 bg-white hover:bg-[#F4F5F0] text-[#1A2421] border border-[#CBD2CA] rounded text-xs font-semibold flex items-center gap-1 shadow-2xs transition-colors"
               >
                 <span className="material-symbols-outlined text-[15px] text-[#0F2D24]">person_add</span>

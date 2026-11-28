@@ -77,8 +77,7 @@ export const MonitoringPage: React.FC = () => {
   const [selectedTicket, setSelectedTicket] = useState<MaintenanceItem | null>(null);
   const [backendHealth, setBackendHealth] = useState<{
     status: string;
-    database: { status: string; name?: string; host?: string; port?: number };
-    isSyntheticDataEnforced?: boolean;
+    database: { status: string };
   } | null>(null);
   const [isLoadingHealth, setIsLoadingHealth] = useState(false);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<string>(() => new Date().toLocaleTimeString('en-IN'));
@@ -176,14 +175,14 @@ export const MonitoringPage: React.FC = () => {
                 : 'bg-[#FFF8E6] text-[#D9822B] border border-[#D9822B]/30'
             }`}>
               {backendHealth?.database?.status === 'connected' 
-                ? `ONLINE (${backendHealth.database.name || 'solaris_dheera'})` 
+                ? 'ONLINE'
                 : 'OFFLINE / LOCAL SIMULATION'}
             </span>
           </div>
 
           <div className="hidden md:flex items-center gap-1.5 text-[#717976] border-l border-[#D6DFD8] pl-3">
             <span className="material-symbols-outlined text-[14px]">security</span>
-            <span className="text-[11px]">Server Synthetic Enforcement: <strong>{backendHealth?.isSyntheticDataEnforced !== false ? 'ACTIVE' : 'INACTIVE'}</strong></span>
+            <span className="text-[11px]">Telemetry: <strong>DEMONSTRATION</strong></span>
           </div>
         </div>
 

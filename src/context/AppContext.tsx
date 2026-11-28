@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { 
   UserProfile, 
   CommunityProject, 
@@ -14,15 +14,7 @@ import {
   INITIAL_AUDIT_LOGS 
 } from '../data/mockData';
 import { runAffordabilityOptimiser } from '../utils/optimiserEngine';
-import { apiClient } from '../services/apiClient';
-import {
-  authenticateAccount,
-  clearAuthSession,
-  getAuthSession,
-  registerAccount,
-  saveAuthSession,
-  type AuthSession
-} from '../utils/authStorage';
+import { apiClient, onApiSessionInvalidated, setApiAccount, type AccountSession } from '../services/apiClient';
 
 export type WorkspaceMode = 'customer' | 'employee';
 
@@ -52,9 +44,13 @@ interface AppContextType {
   navigateTo: (path: string) => void;
 
   isAuthenticated: boolean;
+  session: AccountSession | null;
+  isRestoringSession: boolean;
+  sessionError: string | null;
+  restoreSession: () => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<AuthResult>;
   logIn: (email: string, password: string) => Promise<AuthResult>;
-  logOut: () => void;
+  logOut: () => Promise<void>;
 
   community: CommunityProject;
   updateCommunity: (updates: Partial<CommunityProject>) => void;
@@ -90,70 +86,74 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const STORAGE_KEYS = {
-  WORKSPACE_MODE: 'solaris_workspace_mode',
-  ROLE: 'solaris_role',
-  USER: 'solaris_user',
-  COMMUNITY: 'solaris_community',
-  LOGS: 'solaris_logs'
+const emptyRoster: CommunityProject = {
+  ...INITIAL_COMMUNITY,
+  name: 'Community roster',
+  coordinatorName: '',
+  members: [],
+  totalEligibleFlats: 0,
+  committedMembersCount: 0,
+  totalCommittedInr: 0
 };
 
-const buildAuthProfile = (account: { id: string; name: string; email: string }, needsOnboarding: boolean = false): UserProfile => ({
-  ...DEMO_USERS['household'],
-  id: account.id,
-  name: account.name,
-  email: account.email,
-  roleTitle: 'Resident · Solaris Member',
-  consentSigned: false,
-  consentDate: undefined,
-  onboardingCompleted: false,
-  needsOnboarding
-});
+const defaultOptimisationParams: OptimisationParams = {
+  roofAreaSqFt: 1400,
+  targetCapacityKw: 12,
+  budgetCeilingInr: 580000,
+  financingRatePercentage: 8.5,
+  participantCapInr: 4500,
+  stressFactors: {
+    monsoonDrop: false,
+    rateSpike: false,
+    unitDropOut: false,
+    subsidyDelay: false
+  }
+};
+
+const profileKey = (id: string) => `solaris_profile_${id}`;
+const readProfile = (id: string): Partial<UserProfile> => {
+  try {
+    return JSON.parse(localStorage.getItem(profileKey(id)) ?? '{}') ?? {};
+  } catch {
+    return {};
+  }
+};
+
+function buildAuthProfile(account: AccountSession, needsOnboarding = false): UserProfile {
+  const saved = readProfile(account.id);
+  const role: UserRole = account.role === 'admin' ? 'admin_auditor' :
+    account.role === 'employee' ? 'installer_partner' : 'household';
+  return {
+    ...DEMO_USERS.household,
+    consumerNumber: '',
+    communityId: undefined,
+    consentSigned: false,
+    consentDate: undefined,
+    ...saved,
+    id: account.id,
+    name: account.name,
+    email: account.email,
+    role,
+    roleTitle: account.role === 'customer' ? 'Solaris customer' : `Solaris ${account.role}`,
+    needsOnboarding: saved.needsOnboarding ?? needsOnboarding
+  };
+}
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [session, setSession] = useState<AuthSession | null>(() => getAuthSession());
+  const [session, setSession] = useState<AccountSession | null>(null);
+  const accountRef = useRef<AccountSession | null>(null);
+  const sessionRevision = useRef(0);
+  const [isRestoringSession, setIsRestoringSession] = useState(true);
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const isAuthenticated = Boolean(session);
-
-  // 1. Workspace Mode (Customer vs Employee)
-  const [workspaceMode, setWorkspaceModeState] = useState<WorkspaceMode>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.WORKSPACE_MODE);
-    return saved === 'employee' ? 'employee' : 'customer';
-  });
+  const [workspaceMode, setWorkspaceModeState] = useState<WorkspaceMode>('customer');
+  const [currentRole, setCurrentRole] = useState<UserRole>('household');
+  const [currentUser, setCurrentUser] = useState<UserProfile>(DEMO_USERS.household);
 
   const setWorkspaceMode = useCallback((mode: WorkspaceMode) => {
+    if (mode === 'employee' && (!accountRef.current || accountRef.current.role === 'customer')) return;
     setWorkspaceModeState(mode);
-    localStorage.setItem(STORAGE_KEYS.WORKSPACE_MODE, mode);
   }, []);
-
-  // 2. Role & User State
-  const [currentRole, setCurrentRole] = useState<UserRole>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.ROLE);
-    return (saved as UserRole) || 'household';
-  });
-
-  const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.USER);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.onboardingCompleted) {
-          parsed.needsOnboarding = false;
-        }
-        return parsed;
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    const activeSession = getAuthSession();
-    if (activeSession) {
-      return buildAuthProfile({
-        id: activeSession.accountId,
-        name: activeSession.name,
-        email: activeSession.email
-      });
-    }
-    return DEMO_USERS['household'];
-  });
 
   // 3. Navigation State (Flicker-Free, No Double-Dispatch, Instant Scroll)
   const [currentPath, setCurrentPath] = useState<string>(() => {
@@ -181,27 +181,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // 4. Persistent AI Advisor State
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
-  const [aiMessages, setAiMessages] = useState<PersistentChatMessage[]>([
+  const [aiMessages, setChatMessages] = useState<PersistentChatMessage[]>(() => initialChat());
+  const setAiMessages = useCallback<React.Dispatch<React.SetStateAction<PersistentChatMessage[]>>>(update => {
+    const activeSession = session;
+    setChatMessages(previous => {
+      if (accountRef.current !== activeSession) return previous;
+      return typeof update === 'function' ? update(previous) : update;
+    });
+  }, [session]);
+
+  function initialChat(): PersistentChatMessage[] {
+    return [
     {
       role: 'assistant',
       content: 'Hello! I am your Dheera Green Solar Assistant. How can I help you today with your rooftop solar system, energy generation, savings, or maintenance?',
       isLiveModel: false,
       timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
     }
-  ]);
+    ];
+  }
 
   // 3. Community State
-  const [community, setCommunity] = useState<CommunityProject>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.COMMUNITY);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    return INITIAL_COMMUNITY;
-  });
+  const [community, setCommunity] = useState<CommunityProject>(INITIAL_COMMUNITY);
 
   // Backend Persistence State
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
@@ -211,8 +212,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Reusable community fetcher and database reconciler
   const refreshCommunity = useCallback(async (): Promise<boolean> => {
+    const account = accountRef.current;
+    if (!account || account.role === 'customer') return false;
     try {
       const res = await apiClient.getCommunity();
+      if (accountRef.current !== account) return false;
       if (res.success && res.data?.project && Array.isArray(res.data?.members)) {
         setBackendOnline(true);
         setBackendError(null);
@@ -247,70 +251,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return true;
       } else {
         setBackendOnline(false);
-        setBackendError(res.error || 'MongoDB persistence unavailable. Operating in local mode.');
+        setBackendError(res.error || 'The persisted community roster is unavailable.');
         return false;
       }
-    } catch (err: any) {
+    } catch {
+      if (accountRef.current !== account) return false;
       setBackendOnline(false);
-      setBackendError(`Backend offline: ${err.message}`);
+      setBackendError('The persisted community roster is unavailable.');
       return false;
     }
   }, []);
 
-  // Sync community state with MongoDB backend on initial load
   useEffect(() => {
-    let active = true;
-    refreshCommunity();
-    return () => { active = false; };
-  }, [refreshCommunity]);
+    if (session && session.role !== 'customer') void refreshCommunity();
+  }, [session, refreshCommunity]);
 
   // 5. Modal & UI State
   const [isConsentModalOpen, setIsConsentModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // 6. Audit Logs
-  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.LOGS);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    return INITIAL_AUDIT_LOGS;
-  });
+  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>(INITIAL_AUDIT_LOGS);
 
   // 7. Optimiser State
-  const [optimisationParams, setOptimisationParams] = useState<OptimisationParams>({
-    roofAreaSqFt: 1400,
-    targetCapacityKw: 12,
-    budgetCeilingInr: 580000,
-    financingRatePercentage: 8.5,
-    participantCapInr: 4500,
-    stressFactors: {
-      monsoonDrop: false,
-      rateSpike: false,
-      unitDropOut: false,
-      subsidyDelay: false
-    }
-  });
-
-  const [optimisationResult, setOptimisationResult] = useState<OptimisationResult>(() => {
-    return runAffordabilityOptimiser(INITIAL_COMMUNITY.members, {
-      roofAreaSqFt: 1400,
-      targetCapacityKw: 12,
-      budgetCeilingInr: 580000,
-      financingRatePercentage: 8.5,
-      participantCapInr: 4500,
-      stressFactors: {
-        monsoonDrop: false,
-        rateSpike: false,
-        unitDropOut: false,
-        subsidyDelay: false
-      }
-    });
-  });
+  const [optimisationParams, setOptimisationParams] = useState(defaultOptimisationParams);
+  const [optimisationResult, setOptimisationResult] = useState(() =>
+    runAffordabilityOptimiser(INITIAL_COMMUNITY.members, defaultOptimisationParams)
+  );
 
   const rerunOptimiser = useCallback(() => {
     const result = runAffordabilityOptimiser(community.members, optimisationParams);
@@ -340,72 +307,111 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAuditLogs(prev => [newLog, ...prev]);
   }, [currentUser.name]);
 
-  // Actions
   const switchRole = useCallback((role: UserRole) => {
+    if (accountRef.current) return;
     setCurrentRole(role);
-    const newUser = DEMO_USERS[role] || DEMO_USERS['household'];
-    setCurrentUser(newUser);
-    localStorage.setItem(STORAGE_KEYS.ROLE, role);
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(newUser));
-    addAuditLog('Role Switch', `Switched active demo context to ${newUser.name} (${newUser.roleTitle})`, 'system');
-  }, [addAuditLog]);
+    setCurrentUser(DEMO_USERS[role]);
+  }, []);
 
   const updateCurrentUser = useCallback((updates: Partial<UserProfile>) => {
-    setCurrentUser(prev => {
-      const updated = { ...prev, ...updates };
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updated));
+    const account = accountRef.current;
+    setCurrentUser(previous => {
+      const updated = { ...previous, ...updates };
+      if (account && accountRef.current === account) {
+        localStorage.setItem(profileKey(account.id), JSON.stringify(updated));
+      }
       return updated;
     });
   }, []);
 
-  const applyAuthSession = (account: { id: string; name: string; email: string }, needsOnboarding: boolean = false) => {
-    const authSession = saveAuthSession(account);
-    const profile = buildAuthProfile(account, needsOnboarding);
-    setSession(authSession);
-    setCurrentRole('household');
+  const applyAuthSession = useCallback((account: AccountSession | null, needsOnboarding = false) => {
+    sessionRevision.current += 1;
+    accountRef.current = account;
+    setApiAccount(account?.id ?? null);
+    setSession(account);
+    setSessionError(null);
+    const profile = account ? buildAuthProfile(account, needsOnboarding) : DEMO_USERS.household;
     setCurrentUser(profile);
-    localStorage.setItem(STORAGE_KEYS.ROLE, 'household');
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profile));
-  };
+    setCurrentRole(profile.role);
+    setWorkspaceModeState(account && account.role !== 'customer' ? 'employee' : 'customer');
+    const roster = account && account.role !== 'customer' ? emptyRoster : INITIAL_COMMUNITY;
+    setCommunity(roster);
+    setOptimisationParams(defaultOptimisationParams);
+    setOptimisationResult(runAffordabilityOptimiser(roster.members, defaultOptimisationParams));
+    setAuditLogs(account ? [] : INITIAL_AUDIT_LOGS);
+    setChatMessages(initialChat());
+    setIsAiModalOpen(false);
+    setIsConsentModalOpen(false);
+    setIsSidebarOpen(false);
+    setBackendError(null);
+    setBackendOnline(null);
+  }, []);
+
+  const restoreInFlight = useRef(false);
+  const restoreSession = useCallback(async () => {
+    if (restoreInFlight.current) return;
+    restoreInFlight.current = true;
+    setIsRestoringSession(true);
+    setSessionError(null);
+    const revision = sessionRevision.current;
+    const result = await apiClient.getSession();
+    restoreInFlight.current = false;
+    if (revision !== sessionRevision.current) {
+      setIsRestoringSession(false);
+      return;
+    }
+    if (result.success && result.data) applyAuthSession(result.data);
+    else if (result.httpStatus === 401) applyAuthSession(null);
+    else setSessionError(result.error || 'Could not restore your session.');
+    setIsRestoringSession(false);
+  }, [applyAuthSession]);
+
+  useEffect(() => {
+    localStorage.removeItem('solaris_auth_session');
+    localStorage.removeItem('solaris_auth_accounts');
+    void restoreSession();
+    return onApiSessionInvalidated(() => {
+      // Clear the previous account's screen before loading the current cookie session.
+      applyAuthSession(null);
+      void restoreSession();
+    });
+  }, [applyAuthSession, restoreSession]);
 
   const signUp = useCallback(async (name: string, email: string, password: string): Promise<AuthResult> => {
-    const result = await registerAccount(name, email, password);
-    if (!result.success || !result.account) {
-      return { success: false, error: result.error || 'Unable to create your account.' };
-    }
-    applyAuthSession(result.account, true);
+    const result = await apiClient.register(name, email, password);
+    if (!result.success || !result.data) return { success: false, error: result.error || 'Unable to create your account.' };
+    applyAuthSession(result.data, true);
     return { success: true };
-  }, []);
+  }, [applyAuthSession]);
 
   const logIn = useCallback(async (email: string, password: string): Promise<AuthResult> => {
-    const result = await authenticateAccount(email, password);
-    if (!result.success || !result.account) {
-      return { success: false, error: result.error || 'Unable to log in.' };
-    }
-    applyAuthSession(result.account, false);
+    const result = await apiClient.login(email, password);
+    if (!result.success || !result.data) return { success: false, error: result.error || 'Unable to sign in.' };
+    applyAuthSession(result.data);
     return { success: true };
-  }, []);
+  }, [applyAuthSession]);
 
-  const logOut = useCallback(() => {
-    clearAuthSession();
-    setSession(null);
-    setCurrentRole('household');
-    setCurrentUser(DEMO_USERS['household']);
-    localStorage.removeItem(STORAGE_KEYS.ROLE);
-    localStorage.removeItem(STORAGE_KEYS.USER);
-    setIsSidebarOpen(false);
+  const logOut = useCallback(async () => {
+    const revision = sessionRevision.current;
+    const result = await apiClient.logout();
+    if (revision !== sessionRevision.current) return;
+    if (!result.success) {
+      setBackendError(result.error || 'Could not sign out. Try again.');
+      return;
+    }
+    applyAuthSession(null);
     navigateTo('/');
-  }, [navigateTo]);
+  }, [applyAuthSession, navigateTo]);
 
   const updateCommunity = useCallback((updates: Partial<CommunityProject>) => {
     setCommunity(prev => {
       const updated = { ...prev, ...updates };
-      localStorage.setItem(STORAGE_KEYS.COMMUNITY, JSON.stringify(updated));
       return updated;
     });
   }, []);
 
   const inviteMember = useCallback((newMemberData: Omit<CommunityMember, 'id'>) => {
+    if (accountRef.current) return;
     const newId = `m_${Date.now()}`;
     const newMember: CommunityMember = {
       ...newMemberData,
@@ -418,7 +424,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         members: updatedMembers,
         totalEligibleFlats: prev.totalEligibleFlats + 1
       };
-      localStorage.setItem(STORAGE_KEYS.COMMUNITY, JSON.stringify(updated));
       return updated;
     });
     addAuditLog(
@@ -429,6 +434,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [addAuditLog]);
 
   const toggleMemberConsent = useCallback((memberId: string) => {
+    if (accountRef.current) return;
     setCommunity(prev => {
       const updatedMembers = prev.members.map(m => {
         if (m.id === memberId) {
@@ -442,7 +448,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return m;
       });
       const updated = { ...prev, members: updatedMembers };
-      localStorage.setItem(STORAGE_KEYS.COMMUNITY, JSON.stringify(updated));
       return updated;
     });
   }, []);
@@ -456,8 +461,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return { success: false, error: `Member with id '${memberId}' not found in roster.` };
     }
 
-    // Send update to MongoDB backend
-    const res = await apiClient.updateMemberStatus(memberId, status, currentUser.name);
+    const account = accountRef.current;
+    const res = await apiClient.updateMemberStatus(memberId, status);
+    if (accountRef.current !== account) return { success: false, error: 'The account changed.' };
     if (!res.success) {
       const errMsg = `Persistence Failed: ${res.error || 'Could not update member status in MongoDB'}`;
       setBackendError(errMsg);
@@ -470,8 +476,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Reconcile roster directly from database
     const refreshed = await refreshCommunity();
+    if (accountRef.current !== account) return { success: false, error: 'The account changed.' };
     if (!refreshed) {
-      // If refresh failed, fall back to consistent local reconciliation
+      // Reconcile the confirmed server mutation while the read is unavailable.
       const updated = community.members.map(m => {
         if (m.id === memberId) {
           return {
@@ -500,7 +507,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
 
     return { success: true };
-  }, [community.members, currentUser.name, refreshCommunity, updateCommunity, addAuditLog]);
+  }, [community.members, refreshCommunity, updateCommunity, addAuditLog]);
 
   const signUserConsent = useCallback(() => {
     updateCurrentUser({
@@ -511,6 +518,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         year: 'numeric'
       })
     });
+    if (accountRef.current) {
+      setIsConsentModalOpen(false);
+      return;
+    }
     // Also update in community members list if matching
     const updated = community.members.map(m => {
       if (m.flatNumber.includes('301')) {
@@ -543,6 +554,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         currentPath,
         navigateTo,
         isAuthenticated,
+        session,
+        isRestoringSession,
+        sessionError,
+        restoreSession,
         signUp,
         logIn,
         logOut,

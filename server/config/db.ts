@@ -1,54 +1,59 @@
 import mongoose from 'mongoose';
+import type { Response } from 'express';
 
 const DEFAULT_URI = 'mongodb://127.0.0.1:27017/solaris_dheera';
+let pendingConnection: Promise<typeof mongoose> | undefined;
 
-/**
- * Connect to MongoDB database
- * @param uri Optional custom connection URI (e.g. for isolated test database)
- */
-export async function connectDB(uri?: string): Promise<typeof mongoose> {
-  const connectionUri = uri || process.env.MONGODB_URI || DEFAULT_URI;
-  try {
-    const conn = await mongoose.connect(connectionUri, {
-      serverSelectionTimeoutMS: 2500,
-    });
-    console.log(`[MongoDB] Connected to database: ${conn.connection.name} at ${conn.connection.host}:${conn.connection.port}`);
-    return conn;
-  } catch (error: any) {
-    console.error(`[MongoDB] Connection error to ${connectionUri}:`, error.message);
-    throw error;
-  }
+export function databaseUnavailable(res: Response) {
+  return res.status(503).json({ success: false, error: 'Database is temporarily unavailable.' });
 }
 
-/**
- * Check if MongoDB connection is active
- */
+export function isDatabaseUnavailable(error: unknown): boolean {
+  const driver = mongoose.mongo;
+  return error instanceof mongoose.Error.MongooseServerSelectionError
+    || error instanceof driver.MongoServerSelectionError
+    || error instanceof driver.MongoNetworkError
+    || error instanceof driver.MongoNotConnectedError
+    || error instanceof driver.MongoTopologyClosedError
+    || error instanceof driver.MongoClientClosedError
+    || (error instanceof mongoose.Error && /buffering timed out/.test(error.message));
+}
+
+export async function connectDB(uri?: string): Promise<typeof mongoose> {
+  if (isDbConnected()) return mongoose;
+
+  const connectionUri = uri || process.env.MONGODB_URI ||
+    (process.env.NODE_ENV === 'production' || process.env.VERCEL ? undefined : DEFAULT_URI);
+  if (!connectionUri) throw new Error('Database configuration is missing.');
+  if (process.env.VERCEL_ENV === 'preview' || (process.env.VERCEL && process.env.VERCEL_ENV !== 'production')) {
+    // The driver parses the URI without making a connection.
+    const database = new mongoose.mongo.MongoClient(connectionUri).options.dbName;
+    if (!database?.endsWith('_preview')) throw new Error('A dedicated preview database is required.');
+  }
+
+  pendingConnection ??= mongoose.connect(connectionUri, {
+    serverSelectionTimeoutMS: 2500
+  }).finally(() => {
+    pendingConnection = undefined;
+  });
+
+  return await pendingConnection;
+}
+
 export function isDbConnected(): boolean {
   return mongoose.connection.readyState === 1;
 }
 
-/**
- * Attempt to reconnect if disconnected
- */
 export async function ensureDbConnected(): Promise<boolean> {
   if (isDbConnected()) return true;
-  if ((mongoose.connection.readyState as number) === 2) return false;
   try {
     await connectDB();
-    return isDbConnected();
+    return true;
   } catch {
     return false;
   }
 }
 
-/**
- * Disconnect from MongoDB
- */
 export async function disconnectDB(): Promise<void> {
-  try {
-    await mongoose.disconnect();
-    console.log('[MongoDB] Disconnected from database.');
-  } catch (error: any) {
-    console.error('[MongoDB] Disconnection error:', error.message);
-  }
+  await mongoose.disconnect();
 }

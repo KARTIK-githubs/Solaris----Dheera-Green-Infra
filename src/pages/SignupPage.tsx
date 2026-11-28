@@ -36,7 +36,7 @@ export const SignupPage: React.FC = () => {
     <AuthShell
       eyebrow="Get started"
       title="Create your Solaris account"
-      subtitle="Save your solar plan, join a community cohort, and track your clean-energy credits."
+      subtitle="Save your solar assessments and manage your service requests."
       footer={
         <span>
           Already have an account?{' '}

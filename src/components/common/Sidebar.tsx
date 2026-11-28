@@ -10,7 +10,7 @@ export const Sidebar: React.FC = () => {
     currentUser, 
     logOut, 
     workspaceMode, 
-    setWorkspaceMode 
+    setWorkspaceMode, session
   } = useApp();
 
   const customerRoutes = [
@@ -111,7 +111,7 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {/* Workspace Mode Switcher Tabs */}
-        <div className="mx-3 mb-2 p-1 bg-[#e2f0f9] rounded-xl flex items-center gap-1 text-xs font-semibold">
+        {session?.role !== 'customer' && <div className="mx-3 mb-2 p-1 bg-[#e2f0f9] rounded-xl flex items-center gap-1 text-xs font-semibold">
           <button
             onClick={() => {
               setWorkspaceMode('customer');
@@ -144,11 +144,11 @@ export const Sidebar: React.FC = () => {
             <span className="material-symbols-outlined text-[16px]">engineering</span>
             <span>Staff Mode</span>
           </button>
-        </div>
+        </div>}
 
         {/* Navigation Routes List */}
         <div className="flex-1 overflow-y-auto px-3 py-1 space-y-1">
-          {activeRoutes.map((route) => {
+          {activeRoutes.filter(route => route.path !== '/admin' || session?.role === 'admin').map((route) => {
             const isActive = currentPath === route.path || (route.path !== '/' && currentPath.startsWith(route.path));
             return (
               <button

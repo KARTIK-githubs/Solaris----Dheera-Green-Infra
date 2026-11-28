@@ -161,8 +161,8 @@ export const LandingPage: React.FC = () => {
 
   const primaryAction = isAuthenticated ? '/dashboard' : '/signup';
   const primaryLabel = isAuthenticated ? 'Open my dashboard' : 'Get started free';
-  const secondaryAction = isAuthenticated ? '/assessment' : '/login';
-  const secondaryLabel = isAuthenticated ? 'Run an assessment' : 'Log in';
+  const secondaryAction = '/assessment';
+  const secondaryLabel = 'Try the solar calculator';
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[#F8FAF7]">
@@ -683,10 +683,10 @@ export const LandingPage: React.FC = () => {
               />
               <button
                 type="button"
-                onClick={() => navigateTo(isAuthenticated ? '/assessment' : '/signup')}
+                onClick={() => navigateTo('/assessment')}
                 className="mt-6 inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-[#006b57] px-4 text-xs font-bold text-white transition-colors hover:bg-[#002620]"
               >
-                {isAuthenticated ? 'Open the assessment' : 'Create a free account'}
+                Open the assessment
                 <span aria-hidden="true" className="material-symbols-outlined text-[16px]">arrow_forward</span>
               </button>
             </div>

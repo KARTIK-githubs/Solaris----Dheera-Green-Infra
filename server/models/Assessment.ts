@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IAssessment extends Document {
+  ownerId?: mongoose.Types.ObjectId;
   monthlyBillInr: number;
   monthlyConsumptionKwh: number;
   terraceAreaSqFt: number;
@@ -40,6 +41,8 @@ export interface IAssessment extends Document {
 
   // Server-controlled metadata
   isSynthetic: boolean;
+  inputSource?: 'account_input';
+  outputKind?: 'estimate';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -88,7 +91,9 @@ const AssessmentSchema = new Schema<IAssessment>(
     feasibilityNotes: [{ type: String }],
     isViable: { type: Boolean, required: true },
 
-    // Enforce server-controlled synthetic flag (immutable)
+    // Historical documents may lack provenance. Keep them as originally stored.
+    inputSource: { type: String, enum: ['account_input'], immutable: true },
+    outputKind: { type: String, enum: ['estimate'], immutable: true },
     isSynthetic: {
       type: Boolean,
       default: true,
@@ -100,5 +105,8 @@ const AssessmentSchema = new Schema<IAssessment>(
     timestamps: true
   }
 );
+
+AssessmentSchema.add({ ownerId: { type: Schema.Types.ObjectId, ref: 'Account' } });
+AssessmentSchema.index({ ownerId: 1, createdAt: -1 });
 
 export const Assessment = mongoose.model<IAssessment>('Assessment', AssessmentSchema);

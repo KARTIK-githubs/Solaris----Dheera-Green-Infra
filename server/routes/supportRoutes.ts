@@ -1,211 +1,102 @@
-import { Router, Request, Response } from 'express';
-import { ServiceRequest } from '../models/ServiceRequest';
+import { randomUUID } from 'node:crypto';
+import { Router } from 'express';
+import { actor, limitAccountOperation, requireRole } from '../auth/access';
+import { ServiceRequest, type IServiceRequest } from '../models/ServiceRequest';
 import { logAuditEvent } from '../services/auditService';
-import { isDbConnected, ensureDbConnected } from '../config/db';
+import { onlyKeys, text } from '../validation';
 
 export const supportRouter = Router();
 
-/**
- * POST /api/support/requests
- * Submit a customer maintenance / service request. Persists directly to MongoDB.
- */
-supportRouter.post('/requests', async (req: Request, res: Response) => {
+const categories: IServiceRequest['category'][] = [
+  'inverter', 'inverter_inspection', 'panel_cleaning', 'wiring_grid', 'metering',
+  'meter_billing', 'structural_check', 'general', 'general_support'
+];
+const priorities: IServiceRequest['urgency'][] = ['low', 'routine', 'medium', 'high', 'urgent', 'critical'];
+const statuses: IServiceRequest['status'][] = [
+  'submitted', 'open', 'under_review', 'technician_assigned', 'in_progress', 'resolved', 'closed'
+];
+
+supportRouter.post('/requests', limitAccountOperation('support', 10), async (req, res, next) => {
+  const { consumerNumber, propertyAddress, category = 'general', description, urgency = 'medium', preferredDate } = req.body ?? {};
+  if (!onlyKeys(req.body, ['consumerNumber', 'propertyAddress', 'category', 'description', 'urgency', 'preferredDate'])
+    || !text(consumerNumber, 16) || !/^\d{5,16}$/.test(consumerNumber)
+    || !text(propertyAddress, 250) || !text(description, 2000)
+    || !categories.includes(category) || !priorities.includes(urgency)
+    || (preferredDate !== undefined && (typeof preferredDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(preferredDate)
+      || !Number.isFinite(Date.parse(preferredDate)) || new Date(preferredDate).toISOString().slice(0, 10) !== preferredDate))) {
+    return res.status(400).json({ success: false, error: 'Invalid service request details.' });
+  }
+
+  const account = actor(res);
+  const ticketId = `SR-${new Date().getFullYear()}-${randomUUID()}`;
   try {
-    if (!isDbConnected()) {
-      await ensureDbConnected();
-    }
-    if (!isDbConnected()) {
-      return res.status(503).json({
-        success: false,
-        error: 'MongoDB is disconnected. Service request cannot be saved.',
-        database: 'disconnected'
-      });
-    }
-
-    const {
-      customerName,
-      consumerNumber,
-      propertyAddress,
-      category,
-      description,
-      urgency,
-      preferredDate
-    } = req.body;
-
-    if (!customerName || !consumerNumber || !description) {
-      return res.status(400).json({
-        success: false,
-        error: 'customerName, consumerNumber, and description are required fields.'
-      });
-    }
-
-    const ticketCount = await ServiceRequest.countDocuments();
-    const ticketId = `SR-${new Date().getFullYear()}-${String(ticketCount + 1).padStart(3, '0')}`;
-
-    const newRequest = new ServiceRequest({
-      ticketId,
-      customerName,
-      consumerNumber,
-      propertyAddress: propertyAddress || 'Gulmohar Enclave, New Delhi',
-      category: category || 'general',
-      description,
-      urgency: urgency || 'medium',
-      preferredDate: preferredDate || new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
-      status: 'submitted',
-      isSynthetic: true
+    const request = await ServiceRequest.create({
+      ownerId: account.id, customerName: account.name, ticketId,
+      consumerNumber, propertyAddress, category, description, urgency, preferredDate, status: 'submitted'
     });
-
-    await newRequest.save();
 
     await logAuditEvent({
       action: 'SERVICE_REQUEST_SUBMITTED',
       category: 'lifecycle',
-      details: `Customer ${customerName} (CA #${consumerNumber}) submitted ticket ${ticketId} [${category || 'general'}].`,
-      actor: customerName
+      details: `Ticket ${ticketId} submitted.`,
+      actor: account.id
     });
 
-    return res.status(201).json({
-      success: true,
-      data: newRequest,
-      message: `Service request ${ticketId} registered with Dheera Green Infra.`
-    });
-  } catch (error: any) {
-    console.error('[SupportRoute] Error creating service request:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to submit service request.'
-    });
+    return res.status(201).json({ success: true, data: request });
+  } catch (error) {
+    next(error);
   }
 });
 
-/**
- * GET /api/support/requests
- * Fetch service requests, optionally filtered by consumerNumber.
- */
-supportRouter.get('/requests', async (req: Request, res: Response) => {
+supportRouter.get('/requests', async (req, res, next) => {
+  const account = actor(res);
+  const filter: { ownerId: string | { $type: 'objectId' }; consumerNumber?: string } = {
+    ownerId: account.role === 'customer' ? account.id : { $type: 'objectId' }
+  };
+  const { consumerNumber } = req.query;
+  if (Object.keys(req.query).some(key => key !== 'consumerNumber')) {
+    return res.status(400).json({ success: false, error: 'Invalid search parameters.' });
+  }
+  if (consumerNumber !== undefined) {
+    if (typeof consumerNumber !== 'string' || !/^\d{5,16}$/.test(consumerNumber)) {
+      return res.status(400).json({ success: false, error: 'Invalid consumer number.' });
+    }
+    filter.consumerNumber = consumerNumber;
+  }
   try {
-    if (!isDbConnected()) {
-      await ensureDbConnected();
-    }
-    if (!isDbConnected()) {
-      return res.status(503).json({
-        success: false,
-        error: 'MongoDB is disconnected.',
-        database: 'disconnected'
-      });
-    }
-
-    const { consumerNumber } = req.query;
-    const filter: any = {};
-    if (consumerNumber && typeof consumerNumber === 'string') {
-      filter.consumerNumber = consumerNumber;
-    }
-
-    const requests = await ServiceRequest.find(filter).sort({ createdAt: -1 });
-
-    // If empty in MongoDB, seed initial representative customer requests
-    if (requests.length === 0) {
-      const initialRequests = [
-        {
-          ticketId: `SR-${new Date().getFullYear()}-001`,
-          customerName: 'Rohit Rao',
-          consumerNumber: '102948211',
-          propertyAddress: 'Flat 301, Tower A, Gulmohar Enclave, Saket, New Delhi',
-          category: 'panel_cleaning',
-          description: 'Quarterly post-monsoon panel cleaning and dust removal for 6.8 kWp rooftop array.',
-          urgency: 'low',
-          preferredDate: '2026-11-05',
-          status: 'technician_assigned',
-          assignedEngineer: 'SunPro Field Services (Eng. Sumit Kumar)',
-          isSynthetic: true
-        },
-        {
-          ticketId: `SR-${new Date().getFullYear()}-002`,
-          customerName: 'Rohit Rao',
-          consumerNumber: '102948211',
-          propertyAddress: 'Flat 301, Tower A, Gulmohar Enclave, Saket, New Delhi',
-          category: 'metering',
-          description: 'Bi-directional net meter generation display sync verification with BRPL billing ledger.',
-          urgency: 'medium',
-          preferredDate: '2026-10-15',
-          status: 'resolved',
-          assignedEngineer: 'BRPL Sub-Division Telemetry Desk',
-          resolutionNotes: 'Check meter communication verified. Bi-directional export registers matching billing statements.',
-          isSynthetic: true
-        }
-      ];
-
-      await ServiceRequest.insertMany(initialRequests);
-      const seeded = await ServiceRequest.find(filter).sort({ createdAt: -1 });
-      return res.json({
-        success: true,
-        data: seeded
-      });
-    }
-
-    return res.json({
-      success: true,
-      data: requests
-    });
-  } catch (error: any) {
-    console.error('[SupportRoute] Error fetching service requests:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to fetch service requests.'
-    });
+    const requests = await ServiceRequest.find(filter).sort({ createdAt: -1 }).limit(100);
+    return res.json({ success: true, data: requests });
+  } catch (error) {
+    next(error);
   }
 });
 
-/**
- * PATCH /api/support/requests/:ticketId/status
- * Update the status of a service request (Employee workspace action).
- */
-supportRouter.patch('/requests/:ticketId/status', async (req: Request, res: Response) => {
+supportRouter.patch('/requests/:ticketId/status', requireRole('employee', 'admin'), async (req, res, next) => {
+  const { ticketId } = req.params;
+  const { status, assignedEngineer, resolutionNotes } = req.body ?? {};
+  if (!/^SR-\d{4}-(?:[a-f\d-]{36}|\d{3,12})$/.test(ticketId)
+    || !onlyKeys(req.body, ['status', 'assignedEngineer', 'resolutionNotes'])
+    || !statuses.includes(status)
+    || (assignedEngineer !== undefined && !text(assignedEngineer, 120, 0))
+    || (resolutionNotes !== undefined && !text(resolutionNotes, 2000, 0))) {
+    return res.status(400).json({ success: false, error: 'Invalid ticket update.' });
+  }
+
   try {
-    if (!isDbConnected()) {
-      await ensureDbConnected();
-    }
-    if (!isDbConnected()) {
-      return res.status(503).json({
-        success: false,
-        error: 'MongoDB is disconnected.',
-        database: 'disconnected'
-      });
-    }
-
-    const { ticketId } = req.params;
-    const { status, assignedEngineer, resolutionNotes, operatorName } = req.body;
-
-    const request = await ServiceRequest.findOne({ ticketId });
-    if (!request) {
-      return res.status(404).json({
-        success: false,
-        error: `Service request with ticketId '${ticketId}' not found.`
-      });
-    }
-
-    if (status) request.status = status;
-    if (assignedEngineer) request.assignedEngineer = assignedEngineer;
-    if (resolutionNotes) request.resolutionNotes = resolutionNotes;
-
-    await request.save();
+    const updates = { status, assignedEngineer, resolutionNotes };
+    const request = await ServiceRequest.findOneAndUpdate(
+      { ticketId, ownerId: { $type: 'objectId' } }, updates, { returnDocument: 'after', runValidators: true }
+    );
+    if (!request) return res.status(404).json({ success: false, error: 'Service request not found.' });
 
     await logAuditEvent({
       action: 'SERVICE_REQUEST_UPDATED',
       category: 'lifecycle',
-      details: `Ticket ${ticketId} updated to '${status}'. Assigned to: ${assignedEngineer || 'Unassigned'}.`,
-      actor: operatorName || 'Dheera Green Staff'
+      details: `Ticket ${ticketId} moved to ${status}.`,
+      actor: actor(res).id
     });
-
-    return res.json({
-      success: true,
-      data: request
-    });
-  } catch (error: any) {
-    console.error('[SupportRoute] Error updating service request:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to update service request.'
-    });
+    return res.json({ success: true, data: request });
+  } catch (error) {
+    next(error);
   }
 });

@@ -11,7 +11,7 @@ interface ServiceTicket {
   description: string;
   urgency: 'routine' | 'medium' | 'urgent';
   preferredDate?: string;
-  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  status: 'submitted' | 'open' | 'under_review' | 'technician_assigned' | 'in_progress' | 'resolved' | 'closed';
   assignedEngineer?: string;
   resolutionNotes?: string;
   createdAt: string;
@@ -35,6 +35,8 @@ export const SupportPage: React.FC = () => {
     return d.toISOString().split('T')[0];
   });
   const [description, setDescription] = useState('');
+  const [consumerNumber, setConsumerNumber] = useState(currentUser.consumerNumber);
+  const [propertyAddress, setPropertyAddress] = useState('');
 
   // Staff action state
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
@@ -51,6 +53,7 @@ export const SupportPage: React.FC = () => {
       if (res.success && Array.isArray(res.data)) {
         setTickets(res.data);
       } else {
+        setTickets([]);
         setLoadError(res.error || 'Failed to load tickets from server');
       }
     } catch (err: any) {
@@ -78,17 +81,16 @@ export const SupportPage: React.FC = () => {
 
     try {
       const res = await apiClient.createServiceRequest({
-        customerName: currentUser.name,
-        consumerNumber: currentUser.consumerNumber,
-        propertyAddress: 'Pocket 2, Sector B, Vasant Kunj, New Delhi 110070',
+        consumerNumber: consumerNumber.trim(),
+        propertyAddress: propertyAddress.trim(),
         category,
         description: description.trim(),
         urgency,
-        preferredDate
+        preferredDate: preferredDate || undefined
       });
 
       if (res.success && res.data) {
-        setSuccessMessage(`Service request ${res.data.ticketId} created successfully. Our service team will contact you within 24 hours.`);
+        setSuccessMessage(`Service request ${res.data.ticketId} saved.`);
         setDescription('');
         fetchTickets();
       } else {
@@ -135,9 +137,7 @@ export const SupportPage: React.FC = () => {
     }
   };
 
-  const filteredTickets = workspaceMode === 'customer'
-    ? tickets.filter(t => t.consumerNumber === currentUser.consumerNumber || t.customerName === currentUser.name)
-    : tickets;
+
 
   return (
     <div className="flex flex-col w-full px-4 pb-16 space-y-6 max-w-5xl mx-auto animate-in fade-in">
@@ -256,6 +256,7 @@ export const SupportPage: React.FC = () => {
                 <label className="block font-semibold text-[#002620] mb-1">Description &amp; Observed Symptoms</label>
                 <textarea
                   rows={3}
+                  maxLength={2000}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="e.g. Inverter LED blinking yellow, or request seasonal panel cleaning after dust storm..."
@@ -263,8 +264,19 @@ export const SupportPage: React.FC = () => {
                 />
               </div>
 
-              <div className="p-2.5 bg-[#f4faff] rounded-lg border border-[#e2f0f9] text-[11px] text-[#404846]">
-                Consumer Account: <strong>CA #{currentUser.consumerNumber}</strong> · Resident: <strong>{currentUser.name}</strong>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block">
+                  <span className="block font-semibold mb-1">Consumer account</span>
+                  <input required inputMode="numeric" pattern="[0-9]{5,16}" value={consumerNumber}
+                    onChange={event => setConsumerNumber(event.target.value)}
+                    className="w-full rounded-lg border border-[#cbd2ca] bg-white px-3 py-2" />
+                </label>
+                <label className="block">
+                  <span className="block font-semibold mb-1">Property address</span>
+                  <input required maxLength={250} value={propertyAddress}
+                    onChange={event => setPropertyAddress(event.target.value)}
+                    className="w-full rounded-lg border border-[#cbd2ca] bg-white px-3 py-2" />
+                </label>
               </div>
 
               <button
@@ -321,7 +333,7 @@ export const SupportPage: React.FC = () => {
                 </p>
               </div>
             </div>
-          ) : filteredTickets.length === 0 ? (
+          ) : tickets.length === 0 ? (
             <div className="p-8 text-center text-xs text-[#717976] bg-[#fbfbf9] rounded-xl border border-dashed border-[#cbd2ca]">
               <span className="material-symbols-outlined text-[32px] text-[#006b57] mb-2 block">task_alt</span>
               <strong>No open service requests found.</strong>
@@ -329,7 +341,7 @@ export const SupportPage: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredTickets.map((t) => (
+              {tickets.map((t) => (
                 <div
                   key={t.ticketId}
                   className="p-4 rounded-xl border border-[#e2f0f9] bg-[#fbfbf9] hover:bg-white transition-colors space-y-2.5 text-xs"
@@ -339,11 +351,9 @@ export const SupportPage: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-bold text-[#002620]">{t.ticketId}</span>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                          t.status === 'open'
-                            ? 'bg-[#fee2e2] text-[#991b1b]'
-                            : t.status === 'in_progress'
-                            ? 'bg-[#fef3c7] text-[#92400e]'
-                            : 'bg-[#d1fae5] text-[#065f46]'
+                          ['resolved', 'closed'].includes(t.status)
+                            ? 'bg-[#d1fae5] text-[#065f46]'
+                            : 'bg-[#fef3c7] text-[#92400e]'
                         }`}>
                           {t.status.replace('_', ' ')}
                         </span>

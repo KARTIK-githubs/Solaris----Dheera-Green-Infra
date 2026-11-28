@@ -24,7 +24,7 @@ export async function runAllBackendTests(): Promise<BackendTestResult[]> {
   const results: BackendTestResult[] = [];
 
   console.log('\n--- Running Dheera Green Infra Solaris Backend Verification Suite ---\n');
-  console.log(`[Test Target] Isolated Database: ${TEST_DB_URI}\n`);
+  console.log('[Test target] Isolated database solaris_dheera_test\n');
 
   try {
     let isDbOnline = false;
@@ -48,7 +48,7 @@ export async function runAllBackendTests(): Promise<BackendTestResult[]> {
       results.push({
         name: 'Database Connection & Test Isolation Verification',
         passed: false,
-        message: `Connection not established: ${err.message}. To run live database tests, ensure MongoDB is active on ${TEST_DB_URI}.`
+        message: `Connection not established. Check MongoDB and MONGODB_URI_TEST.`
       });
     }
 
@@ -79,7 +79,7 @@ export async function runAllBackendTests(): Promise<BackendTestResult[]> {
           name: 'Idempotent Seeder & Server-Controlled Synthetic Tag Enforcement',
           passed,
           message: passed
-            ? `Seeded 20 members in '${TEST_DB_URI}'. Verified server-enforced isSynthetic: true on all documents.`
+            ? `Seeded 20 members in the isolated test database. Verified server-enforced isSynthetic: true on all documents.`
             : `Seeder mismatch: count=${members.length}, allSynthetic=${allSynthetic}`
         });
       } catch (err: any) {
@@ -392,6 +392,7 @@ export async function runAllBackendTests(): Promise<BackendTestResult[]> {
         body: { prompt: 'What are the DERC Virtual Net Metering guidelines for multi-tenant housing?' }
       };
       const mockRes: any = {
+        locals: { account: { role: 'customer' } },
         status: (code: number) => { capturedStatusCode = code; return mockRes; },
         json: (data: any) => { capturedPayload = data; return mockRes; }
       };
@@ -482,6 +483,7 @@ export async function runAllBackendTests(): Promise<BackendTestResult[]> {
         }
       };
       const mockRes: any = {
+        locals: { account: { role: 'customer' } },
         status: (code: number) => { capturedStatusCode = code; return mockRes; },
         json: (data: any) => { capturedPayload = data; return mockRes; }
       };
@@ -503,6 +505,9 @@ export async function runAllBackendTests(): Promise<BackendTestResult[]> {
       const isUrlCorrect = interceptedUrl === 'https://api.groq.com/openai/v1/chat/completions';
       const isAuthHeaderCorrect = interceptedHeaders?.['Authorization'] === 'Bearer gsk_mock_test_key_solaris';
       const isModelCorrect = interceptedBody?.model === 'openai/gpt-oss-20b';
+      const trustedRole = interceptedBody?.messages?.[0]?.content?.includes('audience is a Solaris customer');
+      const untrustedContextExcluded = !interceptedBody?.messages?.[1]?.content?.includes('userRole')
+        && interceptedBody?.messages?.[1]?.content?.includes('"targetCapacityKw":12');
       const isReplyCorrect = capturedPayload?.data?.reply === mockReplyText;
       const isLiveModel = capturedPayload?.data?.isLiveModel === true;
 
@@ -512,6 +517,8 @@ export async function runAllBackendTests(): Promise<BackendTestResult[]> {
         isUrlCorrect &&
         isAuthHeaderCorrect &&
         isModelCorrect &&
+        trustedRole &&
+        untrustedContextExcluded &&
         isReplyCorrect &&
         isLiveModel;
 
@@ -553,6 +560,7 @@ export async function runAllBackendTests(): Promise<BackendTestResult[]> {
         body: { prompt: 'How much energy did my system generate this month?' }
       };
       const mockRes: any = {
+        locals: { account: { role: 'customer' } },
         status: (code: number) => { capturedStatusCode = code; return mockRes; },
         json: (data: any) => { capturedPayload = data; return mockRes; }
       };

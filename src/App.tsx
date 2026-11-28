@@ -26,27 +26,37 @@ import { AdminPage } from './pages/AdminPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 
+const staffPaths = new Set(['/community', '/optimiser', '/credit-allocation', '/monitoring', '/reports']);
+const previewPaths = new Set(['/dashboard', '/installation', '/performance', '/savings', '/documents', '/monitoring']);
+
 const RouterView: React.FC = () => {
-  const { currentPath, isAuthenticated, navigateTo, currentUser, isAiModalOpen, setIsAiModalOpen } = useApp();
-  const isPublicPath = currentPath === '/' || currentPath === '/login' || currentPath === '/signup';
+  const { currentPath, isAuthenticated, navigateTo, currentUser, isAiModalOpen, setIsAiModalOpen, session, isRestoringSession, sessionError, restoreSession } = useApp();
+  const isPublicPath = currentPath === '/' || currentPath === '/login' || currentPath === '/signup' || currentPath === '/assessment';
   const needsOnboarding = currentUser?.needsOnboarding === true;
   const hasCompletedOnboarding = currentUser?.onboardingCompleted === true;
 
+  const isStaff = session?.role === 'employee' || session?.role === 'admin';
+  const restricted = (currentPath === '/admin' && session?.role !== 'admin') ||
+    ((staffPaths.has(currentPath) || currentPath.startsWith('/community/')) && !isStaff);
+
   useEffect(() => {
+    if (isRestoringSession || sessionError) return;
     if (!isAuthenticated && !isPublicPath) {
       if (currentPath !== '/') {
-        navigateTo('/');
+        navigateTo('/login');
       }
+    } else if (isAuthenticated && restricted) {
+      navigateTo('/dashboard');
     } else if (isAuthenticated && (currentPath === '/login' || currentPath === '/signup')) {
       navigateTo('/dashboard');
-    } else if (isAuthenticated && needsOnboarding && !hasCompletedOnboarding && currentPath !== '/onboarding') {
+    } else if (isAuthenticated && needsOnboarding && !hasCompletedOnboarding && !isPublicPath && currentPath !== '/onboarding') {
       // Redirect to onboarding only for new signups who have not yet completed onboarding
       navigateTo('/onboarding');
     } else if (isAuthenticated && hasCompletedOnboarding && currentPath === '/onboarding') {
       // Redirect away from onboarding once completed
       navigateTo('/dashboard');
     }
-  }, [currentPath, isAuthenticated, isPublicPath, needsOnboarding, hasCompletedOnboarding, navigateTo]);
+  }, [currentPath, isAuthenticated, isPublicPath, needsOnboarding, hasCompletedOnboarding, navigateTo, isRestoringSession, sessionError, restricted]);
 
   const getSubtitle = () => {
     switch (currentPath) {
@@ -136,8 +146,18 @@ const RouterView: React.FC = () => {
     }
   };
 
-  const showAppShell = isAuthenticated && !isPublicPath;
-  const content = !isAuthenticated && !isPublicPath ? <LandingPage /> : renderContent();
+  const showAppShell = isAuthenticated && (!isPublicPath || currentPath === '/assessment');
+  const requiresSession = !isPublicPath;
+  let content: React.ReactNode;
+  if (requiresSession && isRestoringSession) {
+    content = <p className="p-6" role="status">Restoring your Solaris session…</p>;
+  } else if (requiresSession && sessionError) {
+    content = <div className="p-6" role="alert">{sessionError} <button type="button" className="underline" onClick={restoreSession}>Retry</button></div>;
+  } else if ((requiresSession && !isAuthenticated) || restricted) {
+    content = null;
+  } else {
+    content = renderContent();
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAF7] text-[#1C2930] flex flex-col antialiased selection:bg-[#9af4d8] selection:text-[#00725d]">
@@ -145,15 +165,18 @@ const RouterView: React.FC = () => {
         <>
           <Header subtitle={getSubtitle()} />
           <main className="flex-1 w-full pt-20 pb-20 md:pb-8">
-            {content}
+            {previewPaths.has(currentPath) && (
+              <p className="mx-auto mb-3 max-w-5xl px-4 text-sm text-[#404846]">Demonstration data for installation, generation and savings.</p>
+            )}
+            <React.Fragment key={session?.id}>{content}</React.Fragment>
           </main>
           <Sidebar />
           <BottomNav />
           <ConsentModal />
-          <AiAdvisorModal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
+          <AiAdvisorModal key={session?.id} isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} />
         </>
       ) : (
-        <main className="flex-1 w-full">{content}</main>
+        <main className="flex-1 w-full"><React.Fragment key={session?.id ?? 'public'}>{content}</React.Fragment></main>
       )}
     </div>
   );

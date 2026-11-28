@@ -1,3 +1,8 @@
-import { startServer } from './index';
+import { app } from './index';
+import { ensureDbConnected } from './config/db';
 
-startServer();
+const port = Number(process.env.PORT || 5000);
+if (!(await ensureDbConnected())) {
+  console.warn('[Solaris API] Database unavailable. Database-backed requests will retry the connection.');
+}
+app.listen(port, () => console.log(`Solaris API listening on port ${port}`));

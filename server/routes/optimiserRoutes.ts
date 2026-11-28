@@ -1,10 +1,11 @@
-import { Router, Request, Response } from 'express';
+import { actor, limitAccountOperation } from '../auth/access';
+import { numberInRange, onlyKeys } from '../validation';
+import { Router, Request, Response, NextFunction } from 'express';
 import { OptimisationRun } from '../models/OptimisationRun';
 import { CommunityMember } from '../models/CommunityMember';
 import { runAffordabilityOptimiser } from '../../src/utils/optimiserEngine';
 import { logAuditEvent } from '../services/auditService';
 import { OptimisationParams, CommunityMember as MemberType } from '../../src/types';
-import { isDbConnected, ensureDbConnected } from '../config/db';
 
 export const optimiserRouter = Router();
 
@@ -12,19 +13,8 @@ export const optimiserRouter = Router();
  * POST /api/optimiser/solve
  * Run the deterministic LP combinatorial affordability solver and persist scenario
  */
-optimiserRouter.post('/solve', async (req: Request, res: Response) => {
+optimiserRouter.post('/solve', limitAccountOperation('optimiser', 8), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!isDbConnected()) {
-      await ensureDbConnected();
-    }
-    if (!isDbConnected()) {
-      return res.status(503).json({
-        success: false,
-        error: 'MongoDB is disconnected. Live cohort cannot be fetched from database.',
-        database: 'disconnected'
-      });
-    }
-
     const {
       targetCapacityKw = 12,
       budgetCeilingInr = 580000,
@@ -37,29 +27,18 @@ optimiserRouter.post('/solve', async (req: Request, res: Response) => {
         unitDropOut: false,
         subsidyDelay: false
       }
-    } = req.body;
+    } = req.body ?? {};
 
-    // Validate parameters
-    const validCapacities = [10, 12, 15];
-    if (!validCapacities.includes(Number(targetCapacityKw))) {
-      return res.status(400).json({
-        success: false,
-        error: `targetCapacityKw must be one of: ${validCapacities.join(', ')}`
-      });
-    }
-
-    if (typeof budgetCeilingInr !== 'number' || budgetCeilingInr < 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'budgetCeilingInr must be a non-negative number.'
-      });
-    }
-
-    if (typeof financingRatePercentage !== 'number' || financingRatePercentage < 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'financingRatePercentage must be a non-negative number.'
-      });
+    const stressKeys = ['monsoonDrop', 'rateSpike', 'unitDropOut', 'subsidyDelay'] as const;
+    if (!onlyKeys(req.body, ['targetCapacityKw', 'budgetCeilingInr', 'financingRatePercentage', 'participantCapInr', 'roofAreaSqFt', 'stressFactors'])
+      || ![10, 12, 15].includes(targetCapacityKw)
+      || !numberInRange(budgetCeilingInr, 100_000_000)
+      || !numberInRange(financingRatePercentage, 100)
+      || !numberInRange(participantCapInr, 1_000_000)
+      || !numberInRange(roofAreaSqFt, 10_000_000)
+      || !onlyKeys(stressFactors, stressKeys)
+      || stressKeys.some(key => typeof stressFactors[key] !== 'boolean')) {
+      return res.status(400).json({ success: false, error: 'Invalid optimisation inputs.' });
     }
 
     // Fetch live member cohort from MongoDB
@@ -154,7 +133,7 @@ optimiserRouter.post('/solve', async (req: Request, res: Response) => {
       action: 'OPTIMISATION_RUN',
       category: 'allocation',
       details: `Solved ${solverParams.targetCapacityKw} kWp allocation. Feasible: ${result.isFeasible}. Active Units: ${result.includedCount}/${result.totalCount}. Shortfall: ₹${(result.isFeasible ? 0 : calculatedShortfallInr).toLocaleString('en-IN')}.`,
-      actor: 'Affordability Solver'
+      actor: actor(res).id
     });
 
     return res.status(200).json({
@@ -167,12 +146,8 @@ optimiserRouter.post('/solve', async (req: Request, res: Response) => {
       },
       timestamp: new Date().toISOString()
     });
-  } catch (error: any) {
-    console.error('[OptimiserRoute] Error:', error.message);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to execute optimisation solver: ' + error.message
-    });
+  } catch (error) {
+    next(error);
   }
 });
 
@@ -180,19 +155,8 @@ optimiserRouter.post('/solve', async (req: Request, res: Response) => {
  * GET /api/optimiser/runs
  * Retrieve recent optimization runs
  */
-optimiserRouter.get('/runs', async (_req: Request, res: Response) => {
+optimiserRouter.get('/runs', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!isDbConnected()) {
-      await ensureDbConnected();
-    }
-    if (!isDbConnected()) {
-      return res.status(503).json({
-        success: false,
-        error: 'MongoDB is disconnected.',
-        database: 'disconnected'
-      });
-    }
-
     const runs = await OptimisationRun.find().sort({ createdAt: -1 }).limit(10);
     return res.json({
       success: true,
@@ -200,10 +164,7 @@ optimiserRouter.get('/runs', async (_req: Request, res: Response) => {
       count: runs.length,
       timestamp: new Date().toISOString()
     });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      error: error.message
-    });
+  } catch (error) {
+    next(error);
   }
 });

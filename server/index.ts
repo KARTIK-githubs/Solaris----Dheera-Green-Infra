@@ -1,8 +1,8 @@
-import express, { Request, Response, NextFunction } from 'express';
-import dotenv from 'dotenv';
-import mongoose from 'mongoose';
-import { connectDB } from './config/db';
-import { seedDatabase } from './seed/seedData';
+import 'dotenv/config';
+import express, { type ErrorRequestHandler } from 'express';
+import { requireSession, requireRole, limitAccountOperation } from './auth/access';
+import { authRouter } from './auth/routes';
+import { databaseUnavailable, isDatabaseUnavailable, isDbConnected } from './config/db';
 import { assessmentRouter } from './routes/assessmentRoutes';
 import { communityRouter } from './routes/communityRoutes';
 import { optimiserRouter } from './routes/optimiserRoutes';
@@ -10,111 +10,97 @@ import { auditRouter } from './routes/auditRoutes';
 import { aiRouter } from './routes/aiRoutes';
 import { supportRouter } from './routes/supportRoutes';
 
-dotenv.config();
-
 export const app = express();
-const PORT = process.env.PORT || 5000;
+app.disable('x-powered-by');
+app.set('query parser', 'simple');
 
-// Middleware
-app.use(express.json());
+function trustedOrigins() {
+  const origins = (process.env.TRUSTED_ORIGINS ?? '').split(',').map(origin => origin.trim()).filter(Boolean);
+  if (process.env.NODE_ENV !== 'production') {
+    origins.push('http://localhost:3000', 'http://127.0.0.1:3000');
+  }
+  if (process.env.VERCEL_URL) origins.push('https://' + process.env.VERCEL_URL);
+  if (process.env.VERCEL_BRANCH_URL) origins.push('https://' + process.env.VERCEL_BRANCH_URL);
+  if (process.env.VERCEL_ENV === 'production' && process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    origins.push('https://' + process.env.VERCEL_PROJECT_PRODUCTION_URL);
+  }
+  return origins;
+}
 
-// CORS & Security headers for API
-app.use((_req: Request, res: Response, next: NextFunction) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  if (_req.method === 'OPTIONS') {
-    return res.sendStatus(200);
+app.use('/api', (req, res, next) => {
+  res.set({
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'no-referrer',
+    'X-Frame-Options': 'DENY'
+  });
+  res.vary('Origin');
+
+  const origin = req.get('Origin');
+  if (origin && !trustedOrigins().includes(origin)) {
+    res.status(403).json({ success: false, error: 'Origin is not allowed.' });
+    return;
+  }
+  if (origin) {
+    res.set({
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, X-Solaris-Request, X-Solaris-Account'
+    });
+  }
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
+  if (!['GET', 'HEAD'].includes(req.method) && req.get('X-Solaris-Request') !== '1') {
+    res.status(403).json({ success: false, error: 'Request verification failed.' });
+    return;
   }
   next();
 });
 
-// Health & System probe
-app.get('/api/health', (_req: Request, res: Response) => {
-  const dbStates: Record<number, string> = {
-    0: 'disconnected',
-    1: 'connected',
-    2: 'connecting',
-    3: 'disconnecting'
-  };
-  const dbState = dbStates[mongoose.connection.readyState] || 'unknown';
-
-  return res.json({
-    status: 'ok',
-    service: 'Solaris Backend Service (Dheera Green Infra)',
-    version: '1.0.0-prototype',
-    environment: process.env.NODE_ENV || 'development',
-    systemTime: new Date().toISOString(),
-    database: {
-      status: dbState,
-      name: mongoose.connection.name,
-      host: mongoose.connection.host,
-      port: mongoose.connection.port
-    },
-    isSyntheticDataEnforced: true,
-    jurisdiction: 'Delhi (DERC Jurisdiction)',
-    attribution: 'Solaris foundational engine created by Aryan Das, Ayush Bhatt, Priyal Choudhary. Adapted by Kartik for Dheera Green Infra.'
-  });
+app.use(express.json({ limit: '32kb' }));
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok', database: { status: isDbConnected() ? 'connected' : 'disconnected' } });
 });
 
-// API Routes
-app.use('/api/assessments', assessmentRouter);
-app.use('/api/community', communityRouter);
-app.use('/api/optimiser', optimiserRouter);
-app.use('/api/audit-logs', auditRouter);
-app.use('/api/ai', aiRouter);
-app.use('/api/support', supportRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/assessments', requireSession, assessmentRouter);
+app.use('/api/community', requireSession, requireRole('employee', 'admin'), communityRouter);
+app.use('/api/optimiser', requireSession, requireRole('employee', 'admin'), optimiserRouter);
+app.use('/api/audit-logs', requireSession, requireRole('admin'), auditRouter);
+app.use('/api/ai', requireSession, limitAccountOperation('assistant', 8, 30), aiRouter);
+app.use('/api/support', requireSession, supportRouter);
 
-// 404 Route handler
-app.use((_req: Request, res: Response) => {
-  res.status(404).json({
-    success: false,
-    error: `API endpoint '${_req.method} ${_req.path}' not found.`
-  });
+app.use((_req, res) => {
+  res.status(404).json({ success: false, error: 'API endpoint not found.' });
 });
 
-// Global error handler
-app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-  console.error('[ServerError]', err);
-  res.status(500).json({
-    success: false,
-    error: err.message || 'Internal Server Error'
-  });
-});
-
-/**
- * Start standalone HTTP server
- */
-export async function startServer(port: number | string = PORT) {
-  let dbConnected = false;
-  try {
-    await connectDB();
-    const seedResult = await seedDatabase();
-    console.log(`[Seed] Database ready. Project seeded: ${seedResult.projectSeeded}, Members: ${seedResult.membersSeeded}`);
-    dbConnected = true;
-  } catch (error: any) {
-    console.warn(`[MongoDB Notice] Initial database connection was not established: ${error.message}`);
-    console.warn(`[MongoDB Notice] Backend server will run with database in disconnected state.`);
-    console.warn(`[MongoDB Notice] Start MongoDB at '${process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/solaris_dheera'}' to enable database persistence.`);
+export const handleApiError: ErrorRequestHandler = (error: unknown, _req, res, next) => {
+  if (res.headersSent) {
+    next(error);
+    return;
   }
-
-  try {
-    const server = app.listen(port, () => {
-      console.log(`====================================================`);
-      console.log(`  Solaris Backend Server running on http://localhost:${port}`);
-      console.log(`  API Health: http://localhost:${port}/api/health`);
-      console.log(`  MongoDB: ${dbConnected ? 'Connected & Seeded' : 'Disconnected (Operating in offline mode)'}`);
-      console.log(`====================================================`);
-    });
-
-    return server;
-  } catch (error: any) {
-    console.error('[Fatal] Failed to start backend server:', error.message);
-    process.exit(1);
+  const type = (error as { type?: unknown } | null)?.type;
+  if (type === 'entity.too.large') {
+    res.status(413).json({ success: false, error: 'Request body is too large.' });
+    return;
   }
-}
+  if (type === 'entity.parse.failed' || type === 'request.size.invalid') {
+    res.status(400).json({ success: false, error: 'Invalid JSON request.' });
+    return;
+  }
+  if (type === 'encoding.unsupported' || type === 'charset.unsupported') {
+    res.status(415).json({ success: false, error: 'Unsupported request encoding.' });
+    return;
+  }
+  if (isDatabaseUnavailable(error)) {
+    databaseUnavailable(res);
+    return;
+  }
+  console.error('[Solaris API] Request processing failed.');
+  res.status(500).json({ success: false, error: 'Internal server error.' });
+};
 
-// Self-executing when run directly via tsx server/index.ts
-if (typeof process !== 'undefined' && process.argv && process.argv[1] && process.argv[1].includes('server')) {
-  startServer();
-}
+app.use(handleApiError);

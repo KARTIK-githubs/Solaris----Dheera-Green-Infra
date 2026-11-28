@@ -17,15 +17,15 @@ An intelligent, regulation-aware solar adoption, community solar planning, affor
 ## Architecture & Technology Stack
 
 - **Frontend:** React 19, TypeScript, Tailwind CSS v4 design tokens, Material Symbols & Lucide Icons, Canvas Confetti
-- **State Management & Persistence:** Centralized `AppContext` with live reactive recalculations and localStorage persistence for CA numbers, budget preferences, consent agreements, and audit history
+- **State Management & Persistence:** React `AppContext` for planning inputs and a shared Express API for MongoDB-backed records
 - **Solar Engineering Engine (`src/utils/solarCalculations.ts`):** Deterministic calculations for Delhi insolation (~1,420 kWh/kWp/year), DERC LT-1 domestic tariff brackets, and official PM Surya Ghar: Muft Bijli Yojana subsidies (capped at ₹78,000 for residential 3kW+)
 - **Smart Affordability Optimiser (`src/utils/optimiserEngine.ts`):** Exact combinatorial linear solver optimizing binary participant selection, adhering strictly to budget ceilings, non-negative allocations, 100.0% zero-shortfall reconciliation, and EMI_i < ΔBill_i personal net benefit constraints
-- **Audit & Governance:** Continuous logging of all regulatory approvals, member consent e-signatures, and solver executions in an immutable audit ledger
-- **Build:** Vite 8, ESM, hash-based routing (no React Router), localStorage-only auth (SHA-256 via Web Crypto API)
+- **Audit & Governance:** Server-side audit events for persisted assessment, support, roster and solver operations
+- **Build:** Vite, hash-based routing, Express, Mongoose and MongoDB-backed sessions
 
 ---
 
-## Supported Roles
+## Demonstration Personas
 
 | Role                        | Demo User   | Context                                                               |
 | --------------------------- | ----------- | --------------------------------------------------------------------- |
@@ -73,7 +73,7 @@ An intelligent, regulation-aware solar adoption, community solar planning, affor
 ## Quick Start
 
 ### 1. Prerequisites
-- **Node.js**: v20+ (tested on Node v24)
+- **Node.js**: v24
 - **MongoDB** *(optional for local testing; required for database persistence)*: Running locally on port 27017 or remote via `MONGODB_URI`
 
 ### 2. Environment Setup
@@ -85,7 +85,7 @@ Key environment variables:
 - `PORT`: Backend server port (default: `5000`)
 - `MONGODB_URI`: MongoDB connection string (default: `mongodb://127.0.0.1:27017/solaris_dheera`)
 - `GROQ_API_KEY`: Groq API key for live AI assistant (optional; if omitted or invalid, the backend automatically uses the deterministic offline rule engine)
-- `APP_URL`: Frontend host URL (default: `http://localhost:3000`)
+- `TRUSTED_ORIGINS`: Comma-separated origins for approved browser requests. See the deployment notes below.
 
 ### 3. Running Backend & Frontend
 
@@ -115,6 +115,7 @@ npm test
 
 # Run backend API verification tests
 npm run test:backend
+npm run test:api
 
 # Production build
 npm run build
@@ -160,7 +161,6 @@ src/
 │   └── ReportExportModal.tsx  # PDF/CSV export
 ├── pages/                     # 13 page components
 ├── utils/
-│   ├── authStorage.ts         # LocalStorage auth (SHA-256)
 │   ├── solarCalculations.ts   # Feasibility math
 │   └── optimiserEngine.ts     # LP solver for allocation
 ├── data/
@@ -173,12 +173,9 @@ src/
 
 ## Key Implementation Details
 
-### Authentication
+### Authentication and data access
 
-- LocalStorage-only (no backend)
-- SHA-256 via Web Crypto API (fallback FNV-1a)
-- Keys: `solaris_auth_accounts`, `solaris_auth_session`, `solaris_user`, `solaris_role`, `solaris_community`, `solaris_logs`
-- Onboarding required **only after signup** (flag `needsOnboarding`)
+See [Phase 1 setup and permissions](docs/phase-1.md) for session behavior, endpoint permissions, staff provisioning, legacy records and isolated database testing.
 
 ### Optimiser (Deterministic Linear Program)
 
@@ -212,3 +209,6 @@ Solaris provides regulatory planning guidance and algorithmic simulation models 
 - **Built with:** opencode
 - **Design System:** ui-ux-pro-max skill (Glassmorphism + Community/Forum Landing)
 - **Repository:** [GitHub](https://github.com/aryandas2911/Solaris)
+
+
+**Credits.** The original Solaris engine was developed by Aryan Das, Ayush Bhatt and Priyal Choudhary. Kartik Aggarwal adapted the project during his work with Dheera Green Infra. The original repository and commit history preserve the full team record.

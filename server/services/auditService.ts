@@ -22,8 +22,8 @@ export async function logAuditEvent(entry: CreateAuditEntryInput): Promise<IAudi
       isSynthetic: true // Always server-enforced
     });
     return await log.save();
-  } catch (err: any) {
-    console.error('[AuditService] Failed to append audit log:', err.message);
+  } catch (err) {
+    console.error('[AuditService] Failed to append audit log.');
     throw err;
   }
 }
