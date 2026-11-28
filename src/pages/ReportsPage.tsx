@@ -23,7 +23,7 @@ export const ReportsPage: React.FC = () => {
   const [sourceState, setSourceState] = useState<PersistedSourceState>({
     latestAssessment: null,
     latestOptimisationRun: null,
-    communityCount: community.members?.length || 20,
+    communityCount: community.members.length,
     isLoading: true,
     error: null,
     isBackendConnected: false,
@@ -40,7 +40,7 @@ export const ReportsPage: React.FC = () => {
         apiClient.getCommunity()
       ]);
 
-      const isConnected = healthRes.status === 'ok' || healthRes.success === true;
+      const isConnected = healthRes.status === 'ok' && healthRes.database?.status === 'connected';
       const latestAssessment = assessmentRes.success ? assessmentRes.data : null;
       const latestOptimisation = (runsRes.success && runsRes.data && runsRes.data.length > 0) ? runsRes.data[0] : null;
       const memberCount = commRes.success && commRes.data?.members ? commRes.data.members.length : community.members.length;
@@ -50,7 +50,7 @@ export const ReportsPage: React.FC = () => {
         latestOptimisationRun: latestOptimisation,
         communityCount: memberCount,
         isLoading: false,
-        error: null,
+        error: assessmentRes.error || runsRes.error || commRes.error || healthRes.error || null,
         isBackendConnected: isConnected,
         lastFetchedAt: new Date().toLocaleTimeString('en-IN')
       });

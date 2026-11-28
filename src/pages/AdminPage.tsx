@@ -18,12 +18,13 @@ interface AuditItem {
 }
 
 export const AdminPage: React.FC = () => {
-  const { community, updateMemberStatus, refreshCommunity, auditLogs: contextAuditLogs } = useApp();
+  const { community, updateMemberStatus, refreshCommunity } = useApp();
   
   const [activeTab, setActiveTab] = useState<'audit' | 'health' | 'roster' | 'tests'>('audit');
   
   // Tab 1: Audit Log State
   const [auditLogs, setAuditLogs] = useState<AuditItem[]>([]);
+  const [auditError, setAuditError] = useState<string | null>(null);
   const [isLoadingAudit, setIsLoadingAudit] = useState(false);
   const [auditFilter, setAuditFilter] = useState<'all' | 'allocation' | 'regulatory' | 'financial' | 'system'>('all');
   const [auditSearch, setAuditSearch] = useState('');
@@ -50,16 +51,18 @@ export const AdminPage: React.FC = () => {
   // Load live audit logs from backend
   const fetchAuditLogs = async () => {
     setIsLoadingAudit(true);
+    setAuditError(null);
     try {
       const res = await apiClient.getAuditLogs();
       if (res.success && Array.isArray(res.data)) {
         setAuditLogs(res.data);
       } else {
-        // Fall back to context audit logs if API offline
-        setAuditLogs(contextAuditLogs as any);
+        setAuditLogs([]);
+        setAuditError(res.error || 'Could not load the server audit ledger.');
       }
     } catch {
-      setAuditLogs(contextAuditLogs as any);
+      setAuditLogs([]);
+      setAuditError('Could not load the server audit ledger.');
     } finally {
       setIsLoadingAudit(false);
     }
@@ -157,16 +160,7 @@ export const AdminPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Mandatory Unauthenticated Prototype Security Disclosure */}
-      <AlertBanner
-        variant="warning"
-        code="[PROTOTYPE ADMINISTRATION CONSOLE — NOT A PRODUCTION SECURITY BOUNDARY]"
-        title="Unauthenticated Prototype Console & Academic Demonstration Notice"
-      >
-        <p className="text-xs leading-relaxed text-[#422000]">
-          This administrative console is an <strong>unauthenticated engineering prototype interface</strong> developed for academic demonstration, algorithmic validation, and database inspection. It does not implement cryptographically enforced role-based access control (RBAC), multi-tenant isolation, or production security boundaries. <strong>All participant identities, utility account numbers (CA), and financial escrow deposits are server-controlled synthetic data.</strong> Never input real Aadhaar, PAN, banking, or actual utility account numbers into this prototype.
-        </p>
-      </AlertBanner>
+      {auditError && <p role="alert" className="text-xs text-red-800">{auditError}</p>}
 
       {/* Notification Toasts */}
       {actionSuccessNotice && (
@@ -390,7 +384,7 @@ export const AdminPage: React.FC = () => {
             <div className="p-3.5 rounded bg-[#F8FAF7] border border-[#D6DFD8]">
               <span className="text-[10px] text-[#717976] uppercase font-bold block">Node/Express Server</span>
               <span className="font-headline text-lg font-bold text-[#002620] block mt-1">
-                {healthData?.status === 'ok' ? 'PORT 5000 ACTIVE' : 'OFFLINE'}
+                {healthData?.status === 'ok' ? 'AVAILABLE' : 'OFFLINE'}
               </span>
               <span className="text-[10px] text-[#00725d] font-bold">Reverse Proxy via Vite /api</span>
             </div>
@@ -401,7 +395,7 @@ export const AdminPage: React.FC = () => {
                 {healthData?.database?.status?.toUpperCase() || 'UNKNOWN'}
               </span>
               <span className="text-[10px] text-[#717976]">
-                DB: <strong>{healthData?.database?.name || 'solaris_dheera'}</strong> @ 127.0.0.1:27017
+                Database connectivity
               </span>
             </div>
 
@@ -454,7 +448,7 @@ export const AdminPage: React.FC = () => {
               </div>
               <div className="flex items-center justify-between p-2 rounded bg-white border border-[#D6DFD8]">
                 <span className="text-[#002620]">System Probe Timestamp:</span>
-                <span className="text-[#717976]">{healthData?.systemTime || healthCheckedAt || 'Not available'}</span>
+                <span className="text-[#717976]">{healthCheckedAt || 'Not available'}</span>
               </div>
             </div>
           </div>

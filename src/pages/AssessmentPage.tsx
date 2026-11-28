@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { calculateSolarFeasibility, ENGINEERING_ASSUMPTIONS, SOLAR_METRICS } from '../utils/solarCalculations';
 import { DualParamControl } from '../components/common/DualParamControl';
 import { ConstraintDiagram } from '../components/common/ConstraintDiagram';
 import { AlertBanner } from '../components/common/AlertBanner';
 import { ReportExportModal } from '../components/common/ReportExportModal';
-import { apiClient } from '../services/apiClient';
+import { apiClient, type SavedAssessment } from '../services/apiClient';
 
 export const AssessmentPage: React.FC = () => {
-  const { currentUser, updateCurrentUser, navigateTo } = useApp();
+  const { currentUser, updateCurrentUser, navigateTo, isAuthenticated } = useApp();
 
   const [billAmount, setBillAmount] = useState<number>(currentUser.monthlyBillInr || 6850);
   const [terraceArea, setTerraceArea] = useState<number>(currentUser.terraceAreaSqFt || 650);
@@ -19,6 +19,23 @@ export const AssessmentPage: React.FC = () => {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveFeedback, setSaveFeedback] = useState<string | null>(null);
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
+  const [history, setHistory] = useState<SavedAssessment[]>([]);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let active = true;
+    setLoadingHistory(true);
+    setHistoryError(null);
+    void apiClient.getAssessments().then(result => {
+      if (!active) return;
+      if (result.success && result.data) setHistory(result.data);
+      else setHistoryError(result.error || 'Could not load your saved assessments.');
+      setLoadingHistory(false);
+    });
+    return () => { active = false; };
+  }, [isAuthenticated, lastSavedId]);
 
   // Deterministic calculation result based on real-time inputs
   const calculation = calculateSolarFeasibility({
@@ -54,6 +71,10 @@ export const AssessmentPage: React.FC = () => {
   };
 
   const handleSaveToDatabase = async () => {
+    if (!isAuthenticated) {
+      navigateTo('/login');
+      return;
+    }
     setSaveStatus('saving');
     setSaveFeedback(null);
 
@@ -70,7 +91,7 @@ export const AssessmentPage: React.FC = () => {
 
     if (res.success && res.data) {
       setSaveStatus('saved');
-      setLastSavedId(res.data._id || 'persisted');
+      setLastSavedId(res.data._id);
       setSaveFeedback(`Assessment successfully persisted to MongoDB at ${new Date().toLocaleTimeString('en-IN')}`);
     } else {
       setSaveStatus('error');
@@ -239,7 +260,7 @@ export const AssessmentPage: React.FC = () => {
                 {saveStatus === 'saving' ? 'sync' : 'save'}
               </span>
               <span>
-                {saveStatus === 'saving' ? 'Persisting to Database...' : 'Save Scenario to Database'}
+                {saveStatus === 'saving' ? 'Persisting to Database...' : isAuthenticated ? 'Save Scenario to Database' : 'Sign in to save assessments'}
               </span>
             </button>
 
@@ -263,6 +284,23 @@ export const AssessmentPage: React.FC = () => {
         </div>
 
       </div>
+
+      {isAuthenticated && (
+        <section className="rounded-lg border border-[#CBD2CA] bg-white p-4" aria-label="Saved assessments">
+          <h2 className="font-semibold">Saved assessments</h2>
+          {loadingHistory ? <p role="status" className="text-xs">Loading saved assessments…</p>
+            : historyError ? <p role="alert" className="text-xs text-red-800">{historyError}</p>
+              : history.length === 0 ? <p className="text-xs">You have no saved assessments yet.</p>
+                : <ul className="mt-2 divide-y divide-[#CBD2CA]">
+                  {history.map(item => (
+                    <li className="py-2 text-xs" key={item._id}>
+                      {new Date(item.createdAt).toLocaleDateString('en-IN')} · {item.recommendedCapacityKw} kWp ·
+                      {' '}{item.estAnnualGenerationKwh.toLocaleString('en-IN')} kWh/year
+                    </li>
+                  ))}
+                </ul>}
+        </section>
+      )}
 
       {/* Hero Recommendation Tile (Engineered High-Contrast Forest Green) */}
       <div className="bg-[#0F2D24] text-white rounded-lg p-5 shadow-sm border border-[#163A2F] space-y-4">
