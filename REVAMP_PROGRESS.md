@@ -16,8 +16,8 @@ Development branch is `revamp/solaris-foundation`, based on `main` at `fa13cd5`.
 The server changes are in `server/auth`, `server/index.ts`, `server/config`, `server/models`, `server/routes` and the Vercel adapter. Browser integration is in `src/context/AppContext.tsx`, `src/services/apiClient.ts` and the corresponding pages. CI and tests are in `.github/workflows/verify.yml` and `server/tests`.
 
 ## Verification and continuation
- 
-Local checks on Node 24 and isolated MongoDB 7.0 passed 12 calculation and optimisation checks, 11 existing backend checks and 10 HTTP security and persistence checks. TypeScript checking and the production build passed. GitHub Actions and a Vercel preview are checked separately.
+
+Local checks on Node 24 and isolated MongoDB 7.0 passed 12 calculation and optimisation checks, 11 existing backend checks and 11 HTTP security and persistence checks. TypeScript checking and the production build passed. GitHub Actions and a Vercel preview are checked separately.
 
 Verify the draft PR's CI and review the permission matrix before merge. Use a preview MongoDB database and Vercel preview before production. The Groq provider tests use mocks. Planning preferences are browser-local, installation telemetry is illustrative and email verification, password reset and business workflows remain outside this phase. Legacy records need a verified ownership mapping before assignment. No production migration or deployment settings are part of this PR.
 
