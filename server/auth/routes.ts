@@ -1,7 +1,7 @@
 import { Router, type RequestHandler } from 'express';
-import { ensureDbConnected } from '../config/db';
+import { databaseUnavailable, ensureDbConnected } from '../config/db';
 import {
-  actor, clearSessionCookie, databaseUnavailable, publicAccount,
+  accountChanged, actor, clearSessionCookie, publicAccount,
   rateAllowed, requireSession, sessionId, startSession
 } from './access';
 import { Account, Session } from './models';
@@ -74,7 +74,14 @@ authRouter.post('/logout', async (req, res, next) => {
     return;
   }
   try {
-    if (id) await Session.deleteOne({ _id: id });
+    if (id) {
+      const expected = req.get('X-Solaris-Account');
+      if (expected) {
+        const session = await Session.findById(id).select('accountId').lean();
+        if (session && String(session.accountId) !== expected) return accountChanged(res);
+      }
+      await Session.deleteOne({ _id: id });
+    }
     clearSessionCookie(res);
     res.json({ success: true });
   } catch (error) {

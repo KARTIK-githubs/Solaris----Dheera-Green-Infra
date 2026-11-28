@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import type { Types } from 'mongoose';
 import type { CookieOptions, Request, RequestHandler, Response } from 'express';
-import { ensureDbConnected } from '../config/db';
+import { databaseUnavailable, ensureDbConnected } from '../config/db';
 import { Account, RateWindow, Session, type AccountRole } from './models';
 
 const cookieName = 'solaris_session';
@@ -40,13 +40,12 @@ export function sessionId(req: Request) {
 export async function startSession(req: Request, res: Response, accountId: StoredAccount['_id']) {
   const token = randomBytes(32).toString('hex');
   const prior = sessionId(req);
-  if (prior) await Session.deleteOne({ _id: prior });
-
   await Session.create({
     _id: sha256(token),
     accountId,
     expiresAt: new Date(Date.now() + sessionLifetimeMs)
   });
+  if (prior) await Session.deleteOne({ _id: prior });
   res.cookie(cookieName, token, { ...cookieOptions(), maxAge: sessionLifetimeMs });
 }
 
@@ -69,13 +68,12 @@ export const requireSession: RequestHandler = async (req, res, next) => {
     const session = await Session.findOne({ _id: id, expiresAt: { $gt: new Date() } });
     const account = session && await Account.findById(session.accountId);
     if (!account) {
-      clearSessionCookie(res);
       res.status(401).json({ success: false, error: 'Your session has expired. Sign in again.' });
       return;
     }
     const expectedAccount = req.get('X-Solaris-Account');
     if (expectedAccount && expectedAccount !== String(account._id)) {
-      res.status(409).json({ success: false, error: 'Your account changed in another tab. Refresh to continue.' });
+      accountChanged(res);
       return;
     }
     res.locals.account = publicAccount(account);
@@ -95,8 +93,10 @@ export function requireRole(...allowed: AccountRole[]): RequestHandler {
   };
 }
 
-export function databaseUnavailable(res: Response) {
-  return res.status(503).json({ success: false, error: 'Database is temporarily unavailable.' });
+export function accountChanged(res: Response) {
+  return res.status(409).json({
+    success: false, code: 'ACCOUNT_CHANGED', error: 'Your account changed in another tab.'
+  });
 }
 
 export async function rateAllowed(res: Response, scope: string, key: string, limit: number, windowMs: number) {
