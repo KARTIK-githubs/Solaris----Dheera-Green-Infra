@@ -14,7 +14,7 @@ import {
   INITIAL_AUDIT_LOGS 
 } from '../data/mockData';
 import { runAffordabilityOptimiser } from '../utils/optimiserEngine';
-import { apiClient, setApiAccount, type AccountSession } from '../services/apiClient';
+import { apiClient, onApiSessionInvalidated, setApiAccount, type AccountSession } from '../services/apiClient';
 
 export type WorkspaceMode = 'customer' | 'employee';
 
@@ -96,6 +96,20 @@ const emptyRoster: CommunityProject = {
   totalCommittedInr: 0
 };
 
+const defaultOptimisationParams: OptimisationParams = {
+  roofAreaSqFt: 1400,
+  targetCapacityKw: 12,
+  budgetCeilingInr: 580000,
+  financingRatePercentage: 8.5,
+  participantCapInr: 4500,
+  stressFactors: {
+    monsoonDrop: false,
+    rateSpike: false,
+    unitDropOut: false,
+    subsidyDelay: false
+  }
+};
+
 const profileKey = (id: string) => `solaris_profile_${id}`;
 const readProfile = (id: string): Partial<UserProfile> => {
   try {
@@ -167,7 +181,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // 4. Persistent AI Advisor State
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
-  const [aiMessages, setAiMessages] = useState<PersistentChatMessage[]>(() => initialChat());
+  const [aiMessages, setChatMessages] = useState<PersistentChatMessage[]>(() => initialChat());
+  const setAiMessages = useCallback<React.Dispatch<React.SetStateAction<PersistentChatMessage[]>>>(update => {
+    const activeSession = session;
+    setChatMessages(previous => {
+      if (accountRef.current !== activeSession) return previous;
+      return typeof update === 'function' ? update(previous) : update;
+    });
+  }, [session]);
 
   function initialChat(): PersistentChatMessage[] {
     return [
@@ -253,35 +274,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>(INITIAL_AUDIT_LOGS);
 
   // 7. Optimiser State
-  const [optimisationParams, setOptimisationParams] = useState<OptimisationParams>({
-    roofAreaSqFt: 1400,
-    targetCapacityKw: 12,
-    budgetCeilingInr: 580000,
-    financingRatePercentage: 8.5,
-    participantCapInr: 4500,
-    stressFactors: {
-      monsoonDrop: false,
-      rateSpike: false,
-      unitDropOut: false,
-      subsidyDelay: false
-    }
-  });
-
-  const [optimisationResult, setOptimisationResult] = useState<OptimisationResult>(() => {
-    return runAffordabilityOptimiser(INITIAL_COMMUNITY.members, {
-      roofAreaSqFt: 1400,
-      targetCapacityKw: 12,
-      budgetCeilingInr: 580000,
-      financingRatePercentage: 8.5,
-      participantCapInr: 4500,
-      stressFactors: {
-        monsoonDrop: false,
-        rateSpike: false,
-        unitDropOut: false,
-        subsidyDelay: false
-      }
-    });
-  });
+  const [optimisationParams, setOptimisationParams] = useState(defaultOptimisationParams);
+  const [optimisationResult, setOptimisationResult] = useState(() =>
+    runAffordabilityOptimiser(INITIAL_COMMUNITY.members, defaultOptimisationParams)
+  );
 
   const rerunOptimiser = useCallback(() => {
     const result = runAffordabilityOptimiser(community.members, optimisationParams);
@@ -333,13 +329,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     accountRef.current = account;
     setApiAccount(account?.id ?? null);
     setSession(account);
+    setSessionError(null);
     const profile = account ? buildAuthProfile(account, needsOnboarding) : DEMO_USERS.household;
     setCurrentUser(profile);
     setCurrentRole(profile.role);
     setWorkspaceModeState(account && account.role !== 'customer' ? 'employee' : 'customer');
-    setCommunity(account && account.role !== 'customer' ? emptyRoster : INITIAL_COMMUNITY);
+    const roster = account && account.role !== 'customer' ? emptyRoster : INITIAL_COMMUNITY;
+    setCommunity(roster);
+    setOptimisationParams(defaultOptimisationParams);
+    setOptimisationResult(runAffordabilityOptimiser(roster.members, defaultOptimisationParams));
     setAuditLogs(account ? [] : INITIAL_AUDIT_LOGS);
-    setAiMessages(initialChat());
+    setChatMessages(initialChat());
     setIsAiModalOpen(false);
     setIsConsentModalOpen(false);
     setIsSidebarOpen(false);
@@ -347,11 +347,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setBackendOnline(null);
   }, []);
 
+  const restoreInFlight = useRef(false);
   const restoreSession = useCallback(async () => {
+    if (restoreInFlight.current) return;
+    restoreInFlight.current = true;
     setIsRestoringSession(true);
     setSessionError(null);
     const revision = sessionRevision.current;
     const result = await apiClient.getSession();
+    restoreInFlight.current = false;
     if (revision !== sessionRevision.current) {
       setIsRestoringSession(false);
       return;
@@ -366,7 +370,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.removeItem('solaris_auth_session');
     localStorage.removeItem('solaris_auth_accounts');
     void restoreSession();
-  }, [restoreSession]);
+    return onApiSessionInvalidated(() => {
+      // Clear the previous account's screen before loading the current cookie session.
+      applyAuthSession(null);
+      void restoreSession();
+    });
+  }, [applyAuthSession, restoreSession]);
 
   const signUp = useCallback(async (name: string, email: string, password: string): Promise<AuthResult> => {
     const result = await apiClient.register(name, email, password);
@@ -383,7 +392,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [applyAuthSession]);
 
   const logOut = useCallback(async () => {
+    const revision = sessionRevision.current;
     const result = await apiClient.logout();
+    if (revision !== sessionRevision.current) return;
     if (!result.success) {
       setBackendError(result.error || 'Could not sign out. Try again.');
       return;
