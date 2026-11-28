@@ -386,7 +386,7 @@ export const AdminPage: React.FC = () => {
               <span className="font-headline text-lg font-bold text-[#002620] block mt-1">
                 {healthData?.status === 'ok' ? 'AVAILABLE' : 'OFFLINE'}
               </span>
-              <span className="text-[10px] text-[#00725d] font-bold">Reverse Proxy via Vite /api</span>
+              <span className="text-[10px] text-[#00725d] font-bold">Solaris API</span>
             </div>
 
             <div className="p-3.5 rounded bg-[#F8FAF7] border border-[#D6DFD8]">
@@ -400,12 +400,12 @@ export const AdminPage: React.FC = () => {
             </div>
 
             <div className="p-3.5 rounded bg-[#F8FAF7] border border-[#D6DFD8]">
-              <span className="text-[10px] text-[#717976] uppercase font-bold block">Synthetic Enforcement</span>
+              <span className="text-[10px] text-[#717976] uppercase font-bold block">Assessment Provenance</span>
               <span className="font-headline text-lg font-bold text-[#00725d] block mt-1">
                 SERVER CONTROLLED
               </span>
               <span className="text-[10px] text-[#717976]">
-                isSynthetic: true locked in schema
+                Account input and estimated output
               </span>
             </div>
 

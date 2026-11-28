@@ -686,7 +686,7 @@ export const LandingPage: React.FC = () => {
                 onClick={() => navigateTo('/assessment')}
                 className="mt-6 inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-[#006b57] px-4 text-xs font-bold text-white transition-colors hover:bg-[#002620]"
               >
-                {isAuthenticated ? 'Open the assessment' : 'Create a free account'}
+                Open the assessment
                 <span aria-hidden="true" className="material-symbols-outlined text-[16px]">arrow_forward</span>
               </button>
             </div>

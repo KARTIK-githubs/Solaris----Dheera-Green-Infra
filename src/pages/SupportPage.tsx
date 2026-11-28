@@ -11,7 +11,7 @@ interface ServiceTicket {
   description: string;
   urgency: 'routine' | 'medium' | 'urgent';
   preferredDate?: string;
-  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  status: 'submitted' | 'open' | 'under_review' | 'technician_assigned' | 'in_progress' | 'resolved' | 'closed';
   assignedEngineer?: string;
   resolutionNotes?: string;
   createdAt: string;
@@ -351,11 +351,9 @@ export const SupportPage: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-bold text-[#002620]">{t.ticketId}</span>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                          t.status === 'open'
-                            ? 'bg-[#fee2e2] text-[#991b1b]'
-                            : t.status === 'in_progress'
-                            ? 'bg-[#fef3c7] text-[#92400e]'
-                            : 'bg-[#d1fae5] text-[#065f46]'
+                          ['resolved', 'closed'].includes(t.status)
+                            ? 'bg-[#d1fae5] text-[#065f46]'
+                            : 'bg-[#fef3c7] text-[#92400e]'
                         }`}>
                           {t.status.replace('_', ' ')}
                         </span>

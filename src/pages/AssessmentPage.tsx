@@ -288,6 +288,7 @@ export const AssessmentPage: React.FC = () => {
       {isAuthenticated && (
         <section className="rounded-lg border border-[#CBD2CA] bg-white p-4" aria-label="Saved assessments">
           <h2 className="font-semibold">Saved assessments</h2>
+          <p className="text-xs">Generation and savings are estimates based on the inputs saved with each assessment.</p>
           {loadingHistory ? <p role="status" className="text-xs">Loading saved assessments…</p>
             : historyError ? <p role="alert" className="text-xs text-red-800">{historyError}</p>
               : history.length === 0 ? <p className="text-xs">You have no saved assessments yet.</p>
