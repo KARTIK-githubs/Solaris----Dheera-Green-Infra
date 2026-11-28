@@ -140,8 +140,13 @@ describe('Phase 1 API', () => {
     assert.equal((await create({ ...assessment, isResidential: 'false' })).code, 400);
     assert.equal((await create({ ...assessment, monthlyConsumptionKwh: { $ne: 0 } })).code, 400);
     assert.equal((await create({ ...assessment, ownerId: new mongoose.Types.ObjectId() })).code, 400);
+    assert.equal((await create({ ...assessment, costPerKwInr: 999 })).code, 400);
+    assert.equal((await create({ ...assessment, isSynthetic: true })).code, 400);
     const saved = await create(assessment);
     assert.equal(saved.code, 201, JSON.stringify(saved.body));
+    assert.equal(saved.body.data.isSynthetic, false);
+    assert.equal(saved.body.data.inputSource, 'account_input');
+    assert.equal(saved.body.data.outputKind, 'estimate');
     assert.equal(String((await Assessment.findById(saved.body.data._id).orFail()).ownerId), customerId);
 
     const legacy = { ...saved.body.data, _id: new mongoose.Types.ObjectId() };
@@ -206,6 +211,20 @@ describe('Phase 1 API', () => {
     assert.equal((await api('/optimiser/runs', { cookie: employeeCookie })).body.data.length, 1);
   });
 
+  test('uses session roles for the assistant despite conflicting client context', async () => {
+    const prompt = { prompt: 'Hello', context: { isEmployee: true, userRole: 'admin', workspaceMode: 'employee' } };
+    const customer = await api('/ai/assistant', { method: 'POST', cookie: customerCookie, body: prompt });
+    assert.equal(customer.code, 200);
+    assert.match(customer.body.data.reply, /Dheera Green Solar Assistant/);
+    const employee = await api('/ai/assistant', {
+      method: 'POST',
+      cookie: employeeCookie,
+      body: { ...prompt, context: { isEmployee: false, userRole: 'customer' } }
+    });
+    assert.equal(employee.code, 200);
+    assert.match(employee.body.data.reply, /Engineering & Operations Assistant/);
+  });
+
   test('applies MongoDB-backed limits to the configured assistant route', async context => {
     const assistantClock = Date.now();
     context.mock.method(Date, 'now', () => assistantClock);
@@ -220,7 +239,16 @@ describe('Phase 1 API', () => {
   });
 
   test('invalidates logout and rejects explicitly expired sessions', async () => {
-    assert.equal((await api('/auth/logout', { method: 'POST', cookie: customerCookie })).code, 200);
+    const wrongAccount = await api('/auth/logout', {
+      method: 'POST', cookie: otherCookie, headers: { 'X-Solaris-Account': customerId }
+    });
+    assert.equal(wrongAccount.code, 409);
+    assert.equal(wrongAccount.body.code, 'ACCOUNT_CHANGED');
+    assert.equal(wrongAccount.headers.get('set-cookie'), null);
+    assert.equal((await api('/auth/session', { cookie: otherCookie })).code, 200);
+    assert.equal((await api('/auth/logout', {
+      method: 'POST', cookie: customerCookie, headers: { 'X-Solaris-Account': customerId }
+    })).code, 200);
     assert.equal((await api('/auth/session', { cookie: customerCookie })).code, 401);
     await Session.updateMany({}, { expiresAt: new Date(Date.now() - 1000) });
     assert.equal((await api('/auth/session', { cookie: otherCookie })).code, 401);
@@ -233,6 +261,38 @@ describe('Phase 1 API', () => {
     const response = await api('/auth/session', { cookie: adminCookie });
     assert.equal(response.code, 500);
     assert.deepEqual(response.body, { success: false, error: 'Internal server error.' });
+  });
+
+  test('returns the same database response for a connection lost during an operation', async context => {
+    context.mock.method(Session, 'findOne', () => {
+      throw new mongoose.mongo.MongoNetworkError('Sensitive database host');
+    });
+    const response = await api('/assessments', { cookie: adminCookie });
+    assert.equal(response.code, 503);
+    assert.deepEqual(response.body, { success: false, error: 'Database is temporarily unavailable.' });
+  });
+
+  test('rejects a non-preview database before connecting and accepts the Vercel branch origin', async () => {
+    await disconnectDB();
+    process.env.VERCEL_ENV = 'preview';
+    process.env.VERCEL_BRANCH_URL = 'solaris-branch.example.test';
+    try {
+      await assert.rejects(connectDB(testURI), /dedicated preview database is required/);
+      assert.equal(mongoose.connection.readyState, 0);
+      await connectDB(`mongodb://127.0.0.1:${port}/${dbName}_preview`);
+      assert.equal(mongoose.connection.name, dbName + '_preview');
+      await mongoose.connection.dropDatabase();
+      const origin = await api('/health', {
+        method: 'OPTIONS', headers: { Origin: 'https://solaris-branch.example.test' }
+      });
+      assert.equal(origin.code, 204);
+      assert.equal(origin.headers.get('access-control-allow-origin'), 'https://solaris-branch.example.test');
+    } finally {
+      delete process.env.VERCEL_ENV;
+      delete process.env.VERCEL_BRANCH_URL;
+      await disconnectDB();
+      await connectDB(testURI);
+    }
   });
 
   test('keeps liveness available and returns sanitized database errors', async () => {

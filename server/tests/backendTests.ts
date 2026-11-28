@@ -505,6 +505,9 @@ export async function runAllBackendTests(): Promise<BackendTestResult[]> {
       const isUrlCorrect = interceptedUrl === 'https://api.groq.com/openai/v1/chat/completions';
       const isAuthHeaderCorrect = interceptedHeaders?.['Authorization'] === 'Bearer gsk_mock_test_key_solaris';
       const isModelCorrect = interceptedBody?.model === 'openai/gpt-oss-20b';
+      const trustedRole = interceptedBody?.messages?.[0]?.content?.includes('audience is a Solaris customer');
+      const untrustedContextExcluded = !interceptedBody?.messages?.[1]?.content?.includes('userRole')
+        && interceptedBody?.messages?.[1]?.content?.includes('"targetCapacityKw":12');
       const isReplyCorrect = capturedPayload?.data?.reply === mockReplyText;
       const isLiveModel = capturedPayload?.data?.isLiveModel === true;
 
@@ -514,6 +517,8 @@ export async function runAllBackendTests(): Promise<BackendTestResult[]> {
         isUrlCorrect &&
         isAuthHeaderCorrect &&
         isModelCorrect &&
+        trustedRole &&
+        untrustedContextExcluded &&
         isReplyCorrect &&
         isLiveModel;
 
