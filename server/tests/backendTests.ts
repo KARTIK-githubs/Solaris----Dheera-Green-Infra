@@ -392,6 +392,7 @@ export async function runAllBackendTests(): Promise<BackendTestResult[]> {
         body: { prompt: 'What are the DERC Virtual Net Metering guidelines for multi-tenant housing?' }
       };
       const mockRes: any = {
+        locals: { account: { role: 'customer' } },
         status: (code: number) => { capturedStatusCode = code; return mockRes; },
         json: (data: any) => { capturedPayload = data; return mockRes; }
       };
@@ -482,6 +483,7 @@ export async function runAllBackendTests(): Promise<BackendTestResult[]> {
         }
       };
       const mockRes: any = {
+        locals: { account: { role: 'customer' } },
         status: (code: number) => { capturedStatusCode = code; return mockRes; },
         json: (data: any) => { capturedPayload = data; return mockRes; }
       };
@@ -553,6 +555,7 @@ export async function runAllBackendTests(): Promise<BackendTestResult[]> {
         body: { prompt: 'How much energy did my system generate this month?' }
       };
       const mockRes: any = {
+        locals: { account: { role: 'customer' } },
         status: (code: number) => { capturedStatusCode = code; return mockRes; },
         json: (data: any) => { capturedPayload = data; return mockRes; }
       };
