@@ -226,6 +226,15 @@ describe('Phase 1 API', () => {
     assert.equal((await api('/auth/session', { cookie: otherCookie })).code, 401);
   });
 
+  test('returns a generic response for an unexpected persistence error', async context => {
+    context.mock.method(Session, 'findOne', () => {
+      throw new Error('Private test fixture details');
+    });
+    const response = await api('/auth/session', { cookie: adminCookie });
+    assert.equal(response.code, 500);
+    assert.deepEqual(response.body, { success: false, error: 'Internal server error.' });
+  });
+
   test('keeps liveness available and returns sanitized database errors', async () => {
     await disconnectDB();
     const previousURI = process.env.MONGODB_URI;

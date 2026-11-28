@@ -24,7 +24,7 @@ export async function runAllBackendTests(): Promise<BackendTestResult[]> {
   const results: BackendTestResult[] = [];
 
   console.log('\n--- Running Dheera Green Infra Solaris Backend Verification Suite ---\n');
-  console.log(`[Test Target] Isolated Database: ${TEST_DB_URI}\n`);
+  console.log('[Test target] Isolated database solaris_dheera_test\n');
 
   try {
     let isDbOnline = false;
@@ -48,7 +48,7 @@ export async function runAllBackendTests(): Promise<BackendTestResult[]> {
       results.push({
         name: 'Database Connection & Test Isolation Verification',
         passed: false,
-        message: `Connection not established: ${err.message}. To run live database tests, ensure MongoDB is active on ${TEST_DB_URI}.`
+        message: `Connection not established. Check MongoDB and MONGODB_URI_TEST.`
       });
     }
 
@@ -79,7 +79,7 @@ export async function runAllBackendTests(): Promise<BackendTestResult[]> {
           name: 'Idempotent Seeder & Server-Controlled Synthetic Tag Enforcement',
           passed,
           message: passed
-            ? `Seeded 20 members in '${TEST_DB_URI}'. Verified server-enforced isSynthetic: true on all documents.`
+            ? `Seeded 20 members in the isolated test database. Verified server-enforced isSynthetic: true on all documents.`
             : `Seeder mismatch: count=${members.length}, allSynthetic=${allSynthetic}`
         });
       } catch (err: any) {
