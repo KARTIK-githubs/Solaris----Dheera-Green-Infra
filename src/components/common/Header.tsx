@@ -11,6 +11,7 @@ export const Header: React.FC<HeaderProps> = ({ subtitle = 'Dheera Green Infra Â
     currentUser, 
     navigateTo,
     isAuthenticated,
+    session,
     logOut,
     setIsSidebarOpen,
     backendOnline,
@@ -125,7 +126,7 @@ export const Header: React.FC<HeaderProps> = ({ subtitle = 'Dheera Green Infra Â
         {/* Right Actions: Workspace Mode Switcher, AI Advisor & User Menu */}
         <div className="flex items-center gap-2">
           {/* Workspace Switcher Button */}
-          <button
+          {session?.role !== 'customer' && <button
             onClick={toggleWorkspaceMode}
             className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors border shadow-sm ${
               workspaceMode === 'customer'
@@ -140,7 +141,7 @@ export const Header: React.FC<HeaderProps> = ({ subtitle = 'Dheera Green Infra Â
             <span className="hidden md:inline font-mono text-[11px]">
               {workspaceMode === 'customer' ? 'Staff Mode' : 'Customer View'}
             </span>
-          </button>
+          </button>}
 
           {/* AI Advisor Trigger */}
           <button

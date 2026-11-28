@@ -46,7 +46,6 @@ export const AiAdvisorModal: React.FC<AiAdvisorModalProps> = ({
       const res = await apiClient.askAssistant(textToSend.trim(), {
         ...initialContext,
         workspaceMode,
-        customerName: currentUser.name,
         systemCapacityKw: 6.8
       });
       if (res.success && res.data) {
