@@ -6,7 +6,6 @@ import { CommunityMember } from '../models/CommunityMember';
 import { runAffordabilityOptimiser } from '../../src/utils/optimiserEngine';
 import { logAuditEvent } from '../services/auditService';
 import { OptimisationParams, CommunityMember as MemberType } from '../../src/types';
-import { isDbConnected, ensureDbConnected } from '../config/db';
 
 export const optimiserRouter = Router();
 
@@ -16,17 +15,6 @@ export const optimiserRouter = Router();
  */
 optimiserRouter.post('/solve', limitAccountOperation('optimiser', 8), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!isDbConnected()) {
-      await ensureDbConnected();
-    }
-    if (!isDbConnected()) {
-      return res.status(503).json({
-        success: false,
-        error: 'MongoDB is disconnected. Live cohort cannot be fetched from database.',
-        database: 'disconnected'
-      });
-    }
-
     const {
       targetCapacityKw = 12,
       budgetCeilingInr = 580000,
@@ -169,17 +157,6 @@ optimiserRouter.post('/solve', limitAccountOperation('optimiser', 8), async (req
  */
 optimiserRouter.get('/runs', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!isDbConnected()) {
-      await ensureDbConnected();
-    }
-    if (!isDbConnected()) {
-      return res.status(503).json({
-        success: false,
-        error: 'MongoDB is disconnected.',
-        database: 'disconnected'
-      });
-    }
-
     const runs = await OptimisationRun.find().sort({ createdAt: -1 }).limit(10);
     return res.json({
       success: true,

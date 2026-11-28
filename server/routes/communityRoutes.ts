@@ -5,7 +5,6 @@ import { CommunityProject } from '../models/CommunityProject';
 import { CommunityMember } from '../models/CommunityMember';
 import { logAuditEvent } from '../services/auditService';
 import { INITIAL_COMMUNITY } from '../../src/data/mockData';
-import { isDbConnected, ensureDbConnected } from '../config/db';
 
 export const communityRouter = Router();
 
@@ -17,17 +16,6 @@ const VALID_STATUSES = ['signed_deposited', 'kyc_verified', 'pending_invite', 'w
  */
 communityRouter.get('/', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!isDbConnected()) {
-      await ensureDbConnected();
-    }
-    if (!isDbConnected()) {
-      return res.status(503).json({
-        success: false,
-        error: 'MongoDB is disconnected. Start MongoDB on 127.0.0.1:27017 to access persisted community roster.',
-        database: 'disconnected'
-      });
-    }
-
     const project = await CommunityProject.findOne({ projectId: INITIAL_COMMUNITY.id });
     const members = await CommunityMember.find().sort({ memberId: 1 });
 
@@ -65,17 +53,6 @@ communityRouter.get('/', async (_req: Request, res: Response, next: NextFunction
  */
 communityRouter.patch('/members/:id/status', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!isDbConnected()) {
-      await ensureDbConnected();
-    }
-    if (!isDbConnected()) {
-      return res.status(503).json({
-        success: false,
-        error: 'MongoDB is disconnected. Member status updates cannot be saved.',
-        database: 'disconnected'
-      });
-    }
-
     const { id } = req.params;
     const { status } = req.body ?? {};
 

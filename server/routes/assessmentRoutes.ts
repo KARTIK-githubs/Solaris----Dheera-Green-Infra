@@ -4,7 +4,6 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { Assessment } from '../models/Assessment';
 import { calculateSolarFeasibility, SOLAR_METRICS, ENGINEERING_ASSUMPTIONS } from '../../src/utils/solarCalculations';
 import { logAuditEvent } from '../services/auditService';
-import { isDbConnected, ensureDbConnected } from '../config/db';
 
 export const assessmentRouter = Router();
 
@@ -14,17 +13,6 @@ export const assessmentRouter = Router();
  */
 assessmentRouter.post('/', limitAccountOperation('assessment', 30), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!isDbConnected()) {
-      await ensureDbConnected();
-    }
-    if (!isDbConnected()) {
-      return res.status(503).json({
-        success: false,
-        error: 'MongoDB is disconnected. Assessment cannot be saved to database.',
-        database: 'disconnected'
-      });
-    }
-
     const {
       monthlyBillInr,
       monthlyConsumptionKwh,
@@ -40,7 +28,7 @@ assessmentRouter.post('/', limitAccountOperation('assessment', 30), async (req: 
       || !numberInRange(sanctionedLoadKw, 100_000)
       || (monthlyConsumptionKwh !== undefined && !numberInRange(monthlyConsumptionKwh, 100_000_000))
       || typeof isResidential !== 'boolean'
-      || !numberInRange(costPerKwInr, 10_000_000, 1)) {
+      || !numberInRange(costPerKwInr, 10_000_000, 1000)) {
       return res.status(400).json({ success: false, error: 'Invalid assessment inputs.' });
     }
 
@@ -93,7 +81,9 @@ assessmentRouter.post('/', limitAccountOperation('assessment', 30), async (req: 
       limitingFactor: calculation.limitingFactor || 'energy_demand',
       feasibilityNotes: calculation.feasibilityNotes || [],
       isViable: calculation.isViable ?? true,
-      isSynthetic: true // Server-controlled flag
+      isSynthetic: false,
+      inputSource: 'account_input',
+      outputKind: 'estimate'
     });
 
     const saved = await assessment.save();
@@ -121,17 +111,6 @@ assessmentRouter.post('/', limitAccountOperation('assessment', 30), async (req: 
  */
 assessmentRouter.get('/latest', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!isDbConnected()) {
-      await ensureDbConnected();
-    }
-    if (!isDbConnected()) {
-      return res.status(503).json({
-        success: false,
-        error: 'MongoDB is disconnected.',
-        database: 'disconnected'
-      });
-    }
-
     const latest = await Assessment.findOne({ ownerId: actor(res).id }).sort({ createdAt: -1 });
     return res.json({
       success: true,
@@ -149,17 +128,6 @@ assessmentRouter.get('/latest', async (_req: Request, res: Response, next: NextF
  */
 assessmentRouter.get('/', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!isDbConnected()) {
-      await ensureDbConnected();
-    }
-    if (!isDbConnected()) {
-      return res.status(503).json({
-        success: false,
-        error: 'MongoDB is disconnected.',
-        database: 'disconnected'
-      });
-    }
-
     const assessments = await Assessment.find({ ownerId: actor(res).id }).sort({ createdAt: -1 }).limit(20);
     return res.json({
       success: true,

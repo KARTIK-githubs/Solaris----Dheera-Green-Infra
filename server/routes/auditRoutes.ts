@@ -1,6 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { AuditLog } from '../models/AuditLog';
-import { isDbConnected, ensureDbConnected } from '../config/db';
 
 export const auditRouter = Router();
 
@@ -12,17 +11,6 @@ export const auditRouter = Router();
  */
 auditRouter.get('/', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!isDbConnected()) {
-      await ensureDbConnected();
-    }
-    if (!isDbConnected()) {
-      return res.status(503).json({
-        success: false,
-        error: 'MongoDB is disconnected.',
-        database: 'disconnected'
-      });
-    }
-
     const logs = await AuditLog.find().sort({ timestamp: -1 }).limit(100);
     return res.json({
       success: true,
