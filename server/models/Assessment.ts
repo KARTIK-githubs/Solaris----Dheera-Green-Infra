@@ -41,6 +41,8 @@ export interface IAssessment extends Document {
 
   // Server-controlled metadata
   isSynthetic: boolean;
+  inputSource?: 'account_input';
+  outputKind?: 'estimate';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -89,7 +91,9 @@ const AssessmentSchema = new Schema<IAssessment>(
     feasibilityNotes: [{ type: String }],
     isViable: { type: Boolean, required: true },
 
-    // Enforce server-controlled synthetic flag (immutable)
+    // Historical documents may lack provenance. Keep them as originally stored.
+    inputSource: { type: String, enum: ['account_input'], immutable: true },
+    outputKind: { type: String, enum: ['estimate'], immutable: true },
     isSynthetic: {
       type: Boolean,
       default: true,
