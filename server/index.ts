@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express, { type ErrorRequestHandler } from 'express';
 import { requireSession, requireRole, limitAccountOperation } from './auth/access';
 import { authRouter } from './auth/routes';
-import { isDbConnected } from './config/db';
+import { databaseUnavailable, isDatabaseUnavailable, isDbConnected } from './config/db';
 import { assessmentRouter } from './routes/assessmentRoutes';
 import { communityRouter } from './routes/communityRoutes';
 import { optimiserRouter } from './routes/optimiserRoutes';
@@ -20,7 +20,8 @@ function trustedOrigins() {
     origins.push('http://localhost:3000', 'http://127.0.0.1:3000');
   }
   if (process.env.VERCEL_URL) origins.push('https://' + process.env.VERCEL_URL);
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+  if (process.env.VERCEL_BRANCH_URL) origins.push('https://' + process.env.VERCEL_BRANCH_URL);
+  if (process.env.VERCEL_ENV === 'production' && process.env.VERCEL_PROJECT_PRODUCTION_URL) {
     origins.push('https://' + process.env.VERCEL_PROJECT_PRODUCTION_URL);
   }
   return origins;
@@ -92,6 +93,10 @@ export const handleApiError: ErrorRequestHandler = (error: unknown, _req, res, n
   }
   if (type === 'encoding.unsupported' || type === 'charset.unsupported') {
     res.status(415).json({ success: false, error: 'Unsupported request encoding.' });
+    return;
+  }
+  if (isDatabaseUnavailable(error)) {
+    databaseUnavailable(res);
     return;
   }
   console.error('[Solaris API] Request processing failed.');
