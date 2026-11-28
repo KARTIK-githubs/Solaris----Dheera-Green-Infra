@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IAssessment extends Document {
+  ownerId?: mongoose.Types.ObjectId;
   monthlyBillInr: number;
   monthlyConsumptionKwh: number;
   terraceAreaSqFt: number;
@@ -100,5 +101,8 @@ const AssessmentSchema = new Schema<IAssessment>(
     timestamps: true
   }
 );
+
+AssessmentSchema.add({ ownerId: { type: Schema.Types.ObjectId, ref: 'Account' } });
+AssessmentSchema.index({ ownerId: 1, createdAt: -1 });
 
 export const Assessment = mongoose.model<IAssessment>('Assessment', AssessmentSchema);

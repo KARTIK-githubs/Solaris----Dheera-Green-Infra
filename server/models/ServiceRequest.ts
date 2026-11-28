@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IServiceRequest extends Document {
+  ownerId?: mongoose.Types.ObjectId;
   ticketId: string;
   customerName: string;
   consumerNumber: string;
@@ -83,5 +84,8 @@ const ServiceRequestSchema: Schema = new Schema(
     timestamps: true
   }
 );
+
+ServiceRequestSchema.add({ ownerId: { type: Schema.Types.ObjectId, ref: 'Account' } });
+ServiceRequestSchema.index({ ownerId: 1, createdAt: -1 });
 
 export const ServiceRequest = mongoose.model<IServiceRequest>('ServiceRequest', ServiceRequestSchema);
